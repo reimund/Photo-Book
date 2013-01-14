@@ -25,6 +25,9 @@ var PREVIOUS = -1;
 		self.is_turning_forwards = false;
 		self.is_turning_backwards = false;
 		self.drag_start = null;
+		self.drag_speed = 1;
+		self.last_mouse_x = -1;
+
 
 		this.init = function()
 		{
@@ -119,6 +122,7 @@ var PREVIOUS = -1;
 
 			turning_page = self.page.clone();
 			self.left_page.after(turning_page);
+			self.drag_speed = 1;
 
 			// Left.
 			self.left_page.set_bg(self.get_image(left_image));
@@ -144,11 +148,20 @@ var PREVIOUS = -1;
 
 			// Turn the page.
 			self.on('mousemove', function(e) {
-				var current_drag = (e.pageX - this.offsetLeft) - self.width / 2;
-				var y = Math.min(0, Math.max(-180, (current_drag - self.drag_start) * (180 / (self.drag_start * 2))));
+				var current_drag, y, mouse_x;
+
+				current_drag = (e.pageX - this.offsetLeft) - self.width / 2;
+				y = Math.min(0, Math.max(-180, (current_drag - self.drag_start) * (180 / (self.drag_start * 2))));
+				mouse_x = e.pageX;
 
 				if (PREVIOUS == direction)
 					y = -180 -y;
+
+				// Capture mouse speed while dragging.
+				if (-1 < self.last_mouse_x)
+					self.drag_speed = self.last_mouse_x - mouse_x;
+					
+				self.last_mouse_x = mouse_x;
 
 				turning_page.rotate_y(y);
 			});
@@ -165,6 +178,9 @@ var PREVIOUS = -1;
 
 			// Make the duration shorter the further the page has been dragged.
 			duration = Math.abs(current_y-target_y) / 180 * settings.page_flip_duration;
+
+			// Make it even shorter depending on the current drag speed.
+			duration = duration / Math.max(1, Math.log(Math.abs(self.drag_speed * 0.5)));
 
 			turning_page.css('textIndent', current_y);
 			turning_page.animate({textIndent: target_y}, {
