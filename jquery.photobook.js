@@ -75,21 +75,6 @@ var PREVIOUS = -1;
 			self.turn_animation(self.find('.page').first());
 		};
 		
-		this.on('swipeleft', function() {
-			// Don't swipe if we already are dragging a page since that can
-			// trigger a double flip on non-touch devices.
-			if (null == self.drag_start)
-				self.next();
-		});
-
-		this.on('swiperight', function() {
-
-			// Don't swipe if we already are dragging a page since that can
-			// trigger a double flip on non-touch devices.
-			if (null == self.drag_start)
-				self.previous();
-		});
-
 		this.turn = function(direction)
 		{
 			var turning_page, next_image, rot_y;
@@ -147,7 +132,7 @@ var PREVIOUS = -1;
 				self.current_image = (self.current_image - 1).mod(self.images.length);
 
 			// Turn the page.
-			self.on('mousemove', function(e) {
+			self.on('vmousemove', function(e) {
 				var current_drag, y, mouse_x;
 
 				current_drag = (e.pageX - this.offsetLeft) - self.width / 2;
@@ -181,7 +166,6 @@ var PREVIOUS = -1;
 
 			// Make it even shorter depending on the current drag speed.
 			duration = duration / Math.max(1, Math.log(Math.abs(self.drag_speed * 0.5)));
-
 			turning_page.css('textIndent', current_y);
 			turning_page.animate({textIndent: target_y}, {
 				step: function(now, fx) {
@@ -190,7 +174,6 @@ var PREVIOUS = -1;
 					if (((NEXT == direction && -90 > now)
 							|| (PREVIOUS == direction && -90 < now)
 							) && $(this).data('reordered') == 'no') {
-
 						var parent = $(this).parent();
 						$(this).detach();
 						parent.append($(this));
@@ -202,7 +185,6 @@ var PREVIOUS = -1;
 				duration: duration,
 				easing: 'easeInOutCubic',
 				complete: function() {
-
 					if (NEXT == direction) {
 						 self.current_image_left = (self.current_image_left + 1).mod(self.images.length);
 						 self.current_image_right = (self.current_image_right + 1).mod(self.images.length);
@@ -231,8 +213,8 @@ var PREVIOUS = -1;
 
 		this.setup_page_buttons = function()
 		{
-			$('body').on('mouseup', function(e) {
-				if (e.which != 1)
+			$('body').on('vmouseup', function(e) {
+				if (e.which != 1 && e.which != 0)
 					return;
 
 				var parent_offset, rel_x, page;
@@ -242,15 +224,17 @@ var PREVIOUS = -1;
 				page = self.find('.page');
 
 				// Stop dragging.
-				self.unbind('mousemove');
+				self.unbind('vmousemove');
 				self.drag_start = null;
 
 				if (page.length > 0)
 					self.turn_animation(page.first());
+
+				e.preventDefault();
 			});
 
-			self.on('mousedown', function(e) {
-				if (e.which != 1)
+			self.on('vmousedown', function(e) {
+				if (e.which != 1 && e.which != 0)
 					return;
 
 				var parent_offset = $(this).parent().offset(); 
@@ -262,6 +246,8 @@ var PREVIOUS = -1;
 					self.turn(NEXT);
 				else
 					self.turn(PREVIOUS);
+				
+				e.preventDefault();
 			});
 		};
 
