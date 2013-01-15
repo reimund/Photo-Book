@@ -30,10 +30,10 @@ ul {
 .book {
 	position: relative;
 
-	-webkit-perspective: 1100;
+	-webkit-perspective: 1100px;
 	-moz-perspective: 1100px;
 	-o-perspective: 1100px;
-	perspective: 1100;
+	perspective: 1100px; 
 	-webkit-perspective-origin: 50% 50%;
 	-moz-perspective-origin: 50% 50%;
 	-o-perspective-origin: 50% 50%;
