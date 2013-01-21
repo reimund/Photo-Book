@@ -37,8 +37,12 @@ var PREVIOUS = -1;
 		self.last_mouse_x = -1;
 		self.drag_speed = 1;
 
-		// Used to prevent pages to rotate through each other.
-		self.current_max_turn = 0;
+		// By giving each page a unique identifier, we can prevent the complete
+		// function of page animations to run in the wrong order. That can
+		// happen when a page is rotating very quickly and will cause the
+		// incorrect page to be displayed for a short period of time.
+		self.page_counter = -1;
+		self.last_complete = -1;
 
 
 		this.init = function()
@@ -114,7 +118,9 @@ var PREVIOUS = -1;
 				turning_page_back_image = self.current_image;
 			}
 
-			var turning_page = new TurningPage(self);
+			self.page_counter++;
+
+			var turning_page = new TurningPage(self, self.page_counter);
 
 			self.pages.push(turning_page);
 			self.left_page.after(turning_page.el);
@@ -200,25 +206,60 @@ var PREVIOUS = -1;
 			});
 		}
 
+		this.remove_page = function(id)
+		{
+			for (i in self.pages)
+				if (self.pages[i].id == id) {
+					self.pages.splice(i, 1);
+					break;
+				}
+		}
+
 		this.turn_animation = function(page)
 		{
 			page.animate_turn({
 				drag_speed: self.drag_speed,
 				duration: settings.page_flip_duration,
 				complete: function() {
+					// Check if this complete function was called before the
+					// complete function of previous the page. This can
+					// sometimes happen when a page is dragged very fast.
+					if ((self.last_complete + 1) != page.id) {
+						var prev_page;
+
+						// Get the previous page index.
+						for (i in self.pages)
+							if (self.pages[i].id == page.id)
+								break;
+
+						// Swap out this page with previous page (ie the one
+						// that was supposed to finish before this one).
+						prev_page = self.pages[i - 1];
+						prev_page.skip_count += 1;
+						prev_page.back.css('background-image', page.back.css('background-image'));
+						prev_page.front.css('background-image', page.front.css('background-image'));
+
+						// Forget about this page.
+						page.el.remove();
+						self.remove_page(page.id);
+
+						return;
+					}
+
+					page.el.remove();
+
 					if (NEXT == page.direction) {
-						 self.current_image_left = (self.current_image_left + 1).mod(self.images.length);
-						 self.current_image_right = (self.current_image_right + 1).mod(self.images.length);
+						 self.current_image_left = (self.current_image_left + page.skip_count).mod(self.images.length);
+						 self.current_image_right = (self.current_image_right + page.skip_count).mod(self.images.length);
 						 right_image = self.current_image;
 						 left_image = self.current_image_left;
 					} else {
-						 self.current_image_left = (self.current_image_left - 1).mod(self.images.length);
-						 self.current_image_right = (self.current_image_right - 1).mod(self.images.length);
-						 right_image = page.image_index - 1;
+						 self.current_image_left = (self.current_image_left - page.skip_count).mod(self.images.length);
+						 self.current_image_right = (self.current_image_right - page.skip_count).mod(self.images.length);
+						 right_image = page.image_index - page.skip_count;
 						 left_image = self.current_image;
 					}
-					
-					page.el.remove();
+
 
 					if (self.find('.page').length < 1)
 						if (NEXT == page.direction)
@@ -228,10 +269,9 @@ var PREVIOUS = -1;
 
 					self.left_page.set_bg(self.get_image(left_image));
 					self.set_bg(self.get_image(right_image));
-
-					// Reset max turn.
-					//self.current_max_turn = 0;
 					self.pages.shift();
+
+					self.last_complete = page.id + page.skip_count - 1;
 				}
 			});
 		};
@@ -272,6 +312,7 @@ var PREVIOUS = -1;
 				// Stop dragging.
 				self.unbind('vmousemove');
 				self.drag_start = null;
+				self.last_mouse_x = -1;
 				self.turn_animation(page);
 
 				e.preventDefault();
@@ -304,15 +345,15 @@ var PREVIOUS = -1;
 }(jQuery));
 
 
-var x = 0;
-var TurningPage = function(book)
+var TurningPage = function(book, id)
 {
-	this.name = 'Page ' + x++;
+	this.id = id;
 	this.el = $('<div/>', { 'class': 'page' });
 	this.front = $('<div/>', { 'class': 'front'}).appendTo(this.el);
 	this.back = $('<div/>', { 'class': 'back'}).appendTo(this.el);
 	this.y = 0;
 	this.book = book;
+	this.skip_count = 1;
 
 	this.reordered = 'no';
 	this.direction = null;
@@ -356,8 +397,7 @@ var TurningPage = function(book)
 
 		// Make it even shorter depending on the current drag speed.
 		duration = duration / Math.max(1, Math.log(Math.abs(options.drag_speed * 0.5)));
-
-		duration = 8000;
+		//duration = 2000;
 
 		self.el.css('textIndent', self.y);
 		self.el.animate({textIndent: target_y}, {
