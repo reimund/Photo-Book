@@ -16,6 +16,8 @@ var PREVIOUS = -1;
 		var settings, self, is_turning;
 
 		settings = $.extend({
+			'width':              null,
+			'height':             null,
 			'page_flip_duration': 1500,
 			'wrap_around':        false,
 			'page_buttons':       true,
@@ -46,6 +48,10 @@ var PREVIOUS = -1;
 		self.page_counter = -1;
 		self.last_complete = -1;
 
+		// Size of the sheets that stick out underneath the current pages.
+		self.sheet_width = 10;
+		self.sheet_height = 20;
+
 
 		this.init = function()
 		{
@@ -60,10 +66,17 @@ var PREVIOUS = -1;
 			self.current_image_right = 0;
 			
 			// Get image dimensions.
-			self.height = self.images.first().height();
-			self.width = self.images.first().width();
+			if (settings.width == null)
+				self.width = self.images.first().width();
+			else
+				self.width = settings.width;
+
+			// Get image dimensions.
+			if (settings.height == null)
+				self.height = self.images.first().height();
+			else
+				self.height = settings.height;
 			
-			// Make sure the element remains this size.
 			$(self).width(self.width).height(self.height);
 			
 			self.left_page = $('<div class="left-page"><div class="seam"/></div>');
@@ -77,12 +90,12 @@ var PREVIOUS = -1;
 
 			if (settings.themed) {
 				var html = '\
-					<div class="book-board-outer"> \
+					<div class="book-container"> \
 						<div class="book-board-spine">\
 							<div class="board-inside"> \
 								<div class="spine"></div> \
 							</div> \
-							<div class="book-container"> \
+							<div class="sheet-container"> \
 								<div class="sheets"> \
 									<div class="sheets-left"> \
 										<div class="top"></div> \
@@ -101,6 +114,18 @@ var PREVIOUS = -1;
 				$(settings.container_selector).append(html);
 				self.insertAfter('div.sheets .sheets-left');
 			}
+
+			// Set width & heights.
+			self.closest('.book-container').width(settings.width);
+			self.closest('.book-board-spine').width(settings.width);
+			self.closest('.sheet-container').width(settings.width + self.sheet_width * 2);
+			self.closest('.sheet-container').css('top', -settings.height + 'px');
+			self.closest('.book-board-spine').height(settings.height);
+			self.closest('.board-inside').height(settings.height);
+			self.closest('.book-board-spine').find('div.spine').height(settings.height - 4 * 2); // Numbers from border image.
+			self.parent().find('div.top').height(settings.height - self.sheet_height);
+			
+
 				
 		};
 
