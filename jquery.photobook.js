@@ -16,9 +16,11 @@ var PREVIOUS = -1;
 		var settings, self, is_turning;
 
 		settings = $.extend({
-			'page_flip_duration' : 1500,
-			'wrap_around' : false,
-			'page_buttons' : true,
+			'page_flip_duration': 1500,
+			'wrap_around':        false,
+			'page_buttons':       true,
+			'themed':             true,
+			'container_selector': 'div.main-container',
 		}, options);
 
 		self = this;
@@ -72,6 +74,34 @@ var PREVIOUS = -1;
 
 			if (settings.page_buttons)
 				self.setup_page_buttons();
+
+			if (settings.themed) {
+				var html = '\
+					<div class="book-board-outer"> \
+						<div class="book-board-spine">\
+							<div class="board-inside"> \
+								<div class="spine"></div> \
+							</div> \
+							<div class="book-container"> \
+								<div class="sheets"> \
+									<div class="sheets-left"> \
+										<div class="top"></div> \
+										<div class="bottom"></div> \
+									</div> \
+									<div class="sheets-right"> \
+										<div class="top"></div> \
+										<div class="bottom"></div> \
+									</div> \
+								</div> \
+							</div> \
+						</div> \
+					</div>';
+
+				self.detach();
+				$(settings.container_selector).append(html);
+				self.insertAfter('div.sheets .sheets-left');
+			}
+				
 		};
 
 		this.next = function()
