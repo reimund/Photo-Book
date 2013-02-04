@@ -16,7 +16,7 @@ var PREVIOUS = -1;
 		var settings, self, is_turning;
 
 		settings = $.extend({
-			'page_flip_duration' : 1000,
+			'page_flip_duration' : 1500,
 			'wrap_around' : false,
 			'page_buttons' : true,
 		}, options);
@@ -64,8 +64,9 @@ var PREVIOUS = -1;
 			// Make sure the element remains this size.
 			$(self).width(self.width).height(self.height);
 			
-			self.left_page = $('<div/>', { 'class': 'left_page'});
+			self.left_page = $('<div class="left-page"><div class="seam"/></div>');
 			self.left_page.prependTo(self);
+			$('<div class="seam" />').prependTo(self);
 			self.images.remove();
 			self.css('background-image', 'url('+ $(self.images.get(self.current_image)).attr('src') + ')');
 
@@ -348,9 +349,9 @@ var PREVIOUS = -1;
 var TurningPage = function(book, id)
 {
 	this.id = id;
-	this.el = $('<div/>', { 'class': 'page' });
-	this.front = $('<div/>', { 'class': 'front'}).appendTo(this.el);
-	this.back = $('<div/>', { 'class': 'back'}).appendTo(this.el);
+	this.el = $('<div class="page" />');
+	this.front = $('<div class="front"><div class="seam" /></div>').appendTo(this.el);
+	this.back = $('<div class="back"><div class="seam" /></div>').appendTo(this.el);
 	this.y = 0;
 	this.book = book;
 	this.skip_count = 1;
@@ -397,7 +398,6 @@ var TurningPage = function(book, id)
 
 		// Make it even shorter depending on the current drag speed.
 		duration = duration / Math.max(1, Math.log(Math.abs(options.drag_speed * 0.5)));
-		//duration = 2000;
 
 		self.el.css('textIndent', self.y);
 		self.el.animate({textIndent: target_y}, {

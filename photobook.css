@@ -4,6 +4,9 @@
  * Author: Reimund Trost (c) 2013
  * http://lumens.se
  */
+
+
+/* Styles essential for a working flip.  {{{ */
 ul {
 	margin: 0;
 	padding: 0;
@@ -46,7 +49,7 @@ ul {
 	transform-style: preserve-3d;
 }
 
-.left_page {
+.left-page {
 	width: 50%;
 	height: 100%;
 	position: relative;
@@ -85,3 +88,7 @@ ul {
 	left: 0px;
 }
 
+/* }}} End Essential styles */
+
+/* Theming styles {{{ */
+/* }}} End Theming styles */
