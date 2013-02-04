@@ -124,9 +124,6 @@ var PREVIOUS = -1;
 			self.closest('.board-inside').height(settings.height);
 			self.closest('.book-board-spine').find('div.spine').height(settings.height - 4 * 2); // Numbers from border image.
 			self.parent().find('div.top').height(settings.height - self.sheet_height);
-			
-
-				
 		};
 
 		this.next = function()
