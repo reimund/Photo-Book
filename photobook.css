@@ -5,7 +5,6 @@
  * http://lumens.se
  */
 
-
 /* Styles essential for a working flip.  {{{ */
 ul {
 	margin: 0;
@@ -91,4 +90,132 @@ ul {
 /* }}} End Essential styles */
 
 /* Theming styles {{{ */
+div.book-board-outer {
+	background-color: #d00;
+	box-shadow: 0px 5px 15px 0px rgba(0, 0, 0, 0.3);
+
+	border-width: 14px 30px 14px 30px;
+	border-color: transparent;
+	border-style: solid; /* Required for border-image to work in Firefox. */
+	border-image: url(../img/book-board.png) 14 30 14 30 repeat;
+	border-radius: 8px;
+	/*width: 920px;*/
+}
+
+div.book-board-spine {
+	background: url(../img/board-fold.png) repeat-y center 0;
+	position: relative;
+	top: -14px;
+	left: -30px;
+	width: 920px;
+	height: 613px;
+	margin-bottom: -28px;
+	padding: 12px 30px 12px 30px;
+
+}
+
+div.book-board-outer.simple {
+	background-image: url(../img/texture.png);
+
+	border-radius: 6px;
+	-webkit-border-radius: 6px;
+	-moz-border-radius: 6px;
+	-o-border-radius: 6px;
+}
+
+div.book-board-outer.simple div.book-board-spine {
+	border-radius: 5px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	-o-border-radius: 5px;
+
+	box-shadow:
+		inset -1px -2px 1px rgba(0, 0, 0, 0.2), /* Bottom internal shadow. */
+		inset 1px 2px 1px rgba(255, 255, 255, 0.5); /* Top internal highlight. */
+}
+
+div.board-inside {
+	background-color: #d00;
+	border-width: 4px 2px 4px 2px;
+	border-color: transparent;
+	border-style: solid; /* Required for border-image to work in Firefox. */
+	border-image: url(../img/board-inside-border.png) 4 2 4 2 repeat;
+	width: 920px;
+	height: 613px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+
+div.board-inside div.spine {
+	background: transparent url(../img/board-inside-fold.png) top center repeat-y;
+	height: 605px; /* image_height - (4 * 2) */
+}
+
+div.left-page div.seam {
+	background: url(../img/seam-left.png) repeat-y right 0;
+	height: 100%;
+}
+
+div.book > div.seam {
+	background: url(../img/seam-right.png) repeat-y left 0;
+	width: 50%;
+	height: 100%;
+	position: absolute;
+	right: 0;
+}
+
+div.page div.front div.seam {
+	background: url(../img/seam-right.png) repeat-y left 0;
+	height: 100%;
+}
+
+div.page div.back div.seam {
+	background: url(../img/seam-left.png) repeat-y right 0;
+	height: 100%;
+}
+
+div.book-container {
+	position: relative;
+	left: -10px;
+	width: 940px;
+	top: -613px;
+}
+
+div.sheets {
+	background: transparent;
+	display: table-row;
+	padding-right: 30px;
+}
+
+div.sheets div.sheets-left,
+div.sheets div.sheets-right {
+	float: left;
+	width: 10px;
+}
+
+div.sheets div.top {
+	height: 593px;
+	background-attachment: fixed;
+	background: transparent url(../img/sheets-sprite.png) no-repeat;
+}
+
+div.sheets div.sheets-right div.top { background-position: -70px 0; }
+
+div.sheets div.bottom {
+	background-attachment: fixed;
+	background: transparent url(../img/sheets-sprite.png) no-repeat;
+	background-position: 0 bottom;
+	width: 10px;
+	height: 20px;
+}
+
+div.sheets div.sheets-right div.bottom { background-position: -70px -1579px; }
+
+#book {
+	float: left;
+	position: relative;
+	z-index: 10;
+	box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.7);
+}
 /* }}} End Theming styles */
