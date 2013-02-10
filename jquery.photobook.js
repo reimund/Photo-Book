@@ -6,8 +6,14 @@
  * http://lumens.se
  */
 
-var NEXT = 1;
-var PREVIOUS = -1;
+var NEXT            = 1;
+var PREVIOUS        = -1;
+var NEXT_START      = 0;
+var NEXT_MIDDLE     = 1;
+var NEXT_END        = 2;
+var PREVIOUS_START  = 3;
+var PREVIOUS_MIDDLE = 4;
+var PREVIOUS_END    = 5;
 
 (function($)
 {
@@ -22,6 +28,8 @@ var PREVIOUS = -1;
 			'wrap_around':        false,
 			'page_buttons':       true,
 			'themed':             true,
+			'first_page':         null,
+			'last_page':          null,
 			'container_selector': 'div.main-container',
 		}, options);
 
@@ -54,6 +62,7 @@ var PREVIOUS = -1;
 
 
 		this.init = function()
+
 		{
 			self.images = self.find('img');
 			
@@ -62,8 +71,7 @@ var PREVIOUS = -1;
 				return;
 				
 			self.current_image = 0;
-			self.current_image_left = 0;
-			self.current_image_right = 0;
+			self.static_side_image = 0;
 			
 			// Get image dimensions.
 			if (settings.width == null)
@@ -80,10 +88,13 @@ var PREVIOUS = -1;
 			$(self).width(self.width).height(self.height);
 			
 			self.left_page = $('<div class="left-page"><div class="seam"/></div>');
+			self.right_page = $('<div class="right-page" />');
 			self.left_page.prependTo(self);
+			self.left_page.after(self.right_page);
 			$('<div class="seam" />').prependTo(self);
 			self.images.remove();
-			self.css('background-image', 'url('+ $(self.images.get(self.current_image)).attr('src') + ')');
+			self.left_page.set_bg(self.get_image(self.current_image));
+			self.right_page.set_bg(self.get_image(self.current_image));
 
 			if (settings.page_buttons)
 				self.setup_page_buttons();
@@ -143,61 +154,209 @@ var PREVIOUS = -1;
 
 		};
 		
-		this.prepare_for_turn = function(direction)
+		//     |`                      
+		//     |  `                ´|
+		//     |    `           ´   |
+		//   __|      `      ´      |__
+		//  |  |        `.´         |  |
+		//  |  |         |          |  |
+		//  |  |    b    |     c    |  |
+		//  |  |         |          |  |
+		//  |   `        |          |  |
+		//  |     `      |         ´   |
+		//  |  a    `    |      ´      |
+		//  |_________`  |   ´    d    |
+		//   -----------`.´------------ 
+		//  
+		//       
+		//  Turning forwards:
+		//
+		//  a: left_page
+		//  b: turning_page.back 
+		//  c: turning_page.front
+		//  d: self
+		//
+		//  Turning backwards:
+		//
+		//  a: left_page
+		//  b: turning_page.front
+		//  c: turning_page.back
+		//  d: self
+		//
+		this.get_state = function(direction)
 		{
-			var turning_page, next_image, rot_y;
+			var state = {};
 
 			if (NEXT == direction) {
-				// Don't allow flipping in both directions simultaneously.
-				if (self.is_turning_backwards)
+
+				// The image that will be revealed behind the turning page:
+				if (settings.wrap_around)
+					state.d = (self.current_image + 1).mod(self.images.length);
+				else
+					state.d = Math.min(self.current_image + 1, self.images.length);
+
+
+				state.a = self.static_side_image;
+				state.b = state.d;
+				state.c = self.current_image;
+
+			} else {
+
+				// The image that will be revealed behind the turning page:
+				if (settings.wrap_around)
+					state.a = (self.current_image - 1).mod(self.images.length);
+				else
+					state.a = Math.max(self.current_image - 1, -1);
+
+				state.b = state.a
+				state.c = self.current_image;
+				state.d = self.static_side_image;
+			}
+
+			if (NEXT == direction
+				&& (-1 == self.current_image && !settings.wrap_around))
+			{
+				state.phase = NEXT_START;
+			}
+			else if (PREVIOUS == direction
+					&& (0 == self.current_image && !settings.wrap_around))
+			{
+				state.phase = PREVIOUS_START;
+			}
+			else if (NEXT == direction
+					&& ((self.images.length - 1) == self.current_image && !settings.wrap_around))
+			{
+				state.phase = NEXT_END;
+			}
+			else if (PREVIOUS == direction
+					&& (self.images.length == self.current_image && !settings.wrap_around))
+			{
+				state.phase = PREVIOUS_END;
+			}
+			else 
+			{
+				state.phase = (NEXT == direction) ? NEXT_MIDDLE : PREVIOUS_MIDDLE;
+			}
+
+			return state;
+		}
+
+		this.prepare_for_turn = function(direction)
+		{
+			var turning_page, rot_y, bs;
+
+			if (NEXT == direction) {
+				// Don't allow flipping in both directions simultaneously...
+				if (self.is_turning_backwards
+						// ...and don't allow flipping past the book board.
+						|| self.images.length == self.current_image)
 					return;
-				
+
 				self.is_turning_forwards = true;
 				target_y = 0; // Start rotation.
-				left_image = self.current_image_left;
-				right_image = (self.current_image + 1).mod(self.images.length);
-				turning_page_front_image = self.current_image;
-				turning_page_back_image = right_image;
+
 			} else {
-				// Don't allow flipping in both directions simultaneously.
-				if (self.is_turning_forwards)
+				// Don't allow flipping in both directions simultaneously...
+				if (self.is_turning_forwards 
+						// ...and don't allow flipping past the book board.
+						|| -1 == self.current_image)
 					return;
 
 				self.is_turning_backwards = true;
-				target_y = -180;
-				left_image = (self.current_image - 1).mod(self.images.length);
-				right_image = self.current_image_right;
-				turning_page_front_image = left_image;
-				turning_page_back_image = self.current_image;
+				target_y = -180; // Start rotation.
 			}
 
+			// Create the page that will rotate...
 			self.page_counter++;
-
-			var turning_page = new TurningPage(self, self.page_counter);
+			turning_page = new TurningPage(self, self.page_counter);
 
 			self.pages.push(turning_page);
-			self.left_page.after(turning_page.el);
+			self.right_page.after(turning_page.el);
 			self.drag_speed = 1;
 
-			// Set backgrounds on left & right pages.
-			self.left_page.set_bg(self.get_image(left_image));
-			self.set_bg(self.get_image(right_image));
+			// Get the *browse state*, ie an object that contains indices that
+			// will be used to set what image is displayed on what element.
+			bs = self.get_state(direction);
 
-			// Turning page, NEXT => front, PREVIOUS => back.
-			turning_page.front.set_bg(self.get_image(turning_page_front_image));
-			
-			// Turning page, NEXT => back, PREVIOUS => front.
-			turning_page.back.set_bg(self.get_image(turning_page_back_image));
-
+			turning_page.phase = bs.phase;
 			turning_page.reordered = false;
 			turning_page.direction = direction;
 			turning_page.image_index = self.current_image;
 			turning_page.rotate_y(target_y);
 
-			if (NEXT == direction) {
-				self.current_image = (self.current_image + 1).mod(self.images.length);
-			} else {
-				self.current_image = (self.current_image - 1).mod(self.images.length);
+			switch (bs.phase) {
+
+				case NEXT_START:
+					self.right_page.set_bg(self.get_image(bs.d));
+					turning_page.front.set_bg(null, 'purple');
+					turning_page.back.set_bg(self.get_image(bs.b));
+
+					break;
+
+				case NEXT_MIDDLE:
+					// If the first turning page is the first page, ensure
+					// that the left side still is transparent.
+					if (NEXT_START != self.pages[0].phase)
+						self.left_page.set_bg(self.get_image(bs.a));
+
+					self.right_page.set_bg(self.get_image(bs.d));
+					turning_page.front.set_bg(self.get_image(bs.c));
+					turning_page.back.set_bg(self.get_image(bs.b));
+
+					break;
+
+				case NEXT_END:
+					self.right_page.set_bg(null, 'transparent');
+					turning_page.front.set_bg(self.get_image(bs.c));
+					turning_page.back.set_bg(null, 'purple');
+
+					break;
+
+				case PREVIOUS_START:
+					self.left_page.set_bg(null, 'transparent');
+					turning_page.front.set_bg(null, 'purple');
+					turning_page.back.set_bg(self.get_image(bs.c));
+
+					break;
+
+				case PREVIOUS_MIDDLE:
+					// If the first turning page is the first page, ensure
+					// that the left side still is transparent.
+					if (PREVIOUS_START != self.pages[0].phase)
+						self.left_page.set_bg(self.get_image(bs.a));
+
+					// If the first turning page is the last page, ensure
+					// that the right side still is transparent.
+					if (PREVIOUS_END != self.pages[0].phase)
+						self.right_page.set_bg(self.get_image(bs.d));
+
+					turning_page.front.set_bg(self.get_image(bs.b));
+					turning_page.back.set_bg(self.get_image(bs.c));
+
+					break;
+
+				case PREVIOUS_END:
+					self.left_page.set_bg(self.get_image(bs.a));
+					turning_page.front.set_bg(self.get_image(bs.b));
+					turning_page.back.set_bg(null, 'purple');
+
+					break;
+			}
+
+			if (NEXT == direction)
+			{
+				if (settings.wrap_around)
+					self.current_image = (self.current_image + 1).mod(self.images.length);
+				else
+					self.current_image = Math.min(self.current_image + 1, self.images.length);
+
+			}
+			else
+			{
+				if (settings.wrap_around)
+					self.current_image = (self.current_image - 1).mod(self.images.length);
+				else
+					self.current_image = Math.max(self.current_image - 1, -1);
 			}
 			
 			return turning_page;
@@ -274,6 +433,8 @@ var PREVIOUS = -1;
 				drag_speed: self.drag_speed,
 				duration: settings.page_flip_duration,
 				complete: function() {
+					var right_image, left_image;
+
 					// Check if this complete function was called before the
 					// complete function of previous the page. This can
 					// sometimes happen when a page is dragged very fast.
@@ -288,8 +449,11 @@ var PREVIOUS = -1;
 						// Swap out this page with previous page (ie the one
 						// that was supposed to finish before this one).
 						prev_page = self.pages[i - 1];
+						prev_page.phase = page.phase;
 						prev_page.skip_count += 1;
+						prev_page.back.css('background-color', page.back.css('background-color'));
 						prev_page.back.css('background-image', page.back.css('background-image'));
+						prev_page.front.css('background-color', page.front.css('background-color'));
 						prev_page.front.css('background-image', page.front.css('background-image'));
 
 						// Forget about this page.
@@ -298,19 +462,63 @@ var PREVIOUS = -1;
 
 						return;
 					}
-
+					
 					page.el.remove();
 
 					if (NEXT == page.direction) {
-						 self.current_image_left = (self.current_image_left + page.skip_count).mod(self.images.length);
-						 self.current_image_right = (self.current_image_right + page.skip_count).mod(self.images.length);
-						 right_image = self.current_image;
-						 left_image = self.current_image_left;
+
+						 if (settings.wrap_around) {
+							 self.static_side_image = (self.static_side_image + page.skip_count).mod(self.images.length);
+						 } else {
+							self.static_side_image = Math.min(self.static_side_image + page.skip_count, self.images.length);
+						 }
+
 					} else {
-						 self.current_image_left = (self.current_image_left - page.skip_count).mod(self.images.length);
-						 self.current_image_right = (self.current_image_right - page.skip_count).mod(self.images.length);
-						 right_image = page.image_index - page.skip_count;
-						 left_image = self.current_image;
+
+						 if (settings.wrap_around) {
+							 self.static_side_image = (self.static_side_image - page.skip_count).mod(self.images.length);
+						 } else {
+							self.static_side_image = Math.max(self.static_side_image - page.skip_count, -1);
+						 }
+					}
+
+					switch (page.phase)
+					{
+						case NEXT_START:
+							self.left_page.set_bg(self.get_image(self.static_side_image));
+							break;
+
+						case NEXT_END:
+							self.left_page.set_bg(null, 'purple');
+							break;
+
+						case NEXT_MIDDLE:
+							self.left_page.set_bg(self.get_image(self.static_side_image));
+							break;
+
+						case PREVIOUS_START:
+							self.right_page.set_bg(null, 'purple');
+							self.left_page.set_bg(null, 'transparent');
+							break;
+
+						case PREVIOUS_MIDDLE:
+							self.left_page.set_bg(self.get_image(self.current_image));
+							self.right_page.set_bg(self.get_image(self.static_side_image));
+
+							// Check if the last turning page is the first
+							// page. If so, let the board show through...
+							if (PREVIOUS_START == self.pages[self.pages.length - 1].phase)
+								self.left_page.set_bg(null, 'transparent');
+							break;
+
+						case PREVIOUS_END:
+							self.right_page.set_bg(self.get_image(self.static_side_image));
+
+							// Check if the last turning page is the first
+							// page. If so, let the board show through...
+							if (PREVIOUS_START != self.pages[self.pages.length - 1].phase)
+								self.left_page.set_bg(self.get_image(self.current_image));
+							break;
 					}
 
 
@@ -320,8 +528,6 @@ var PREVIOUS = -1;
 						else
 							self.is_turning_backwards = false;
 
-					self.left_page.set_bg(self.get_image(left_image));
-					self.set_bg(self.get_image(right_image));
 					self.pages.shift();
 
 					self.last_complete = page.id + page.skip_count - 1;
@@ -376,6 +582,9 @@ var PREVIOUS = -1;
 		/* Gets the src of the image of the specified index. */
 		this.get_image = function(index)
 		{
+			if (0 > index || null == index)
+				return null;
+
 			return $(self.images.get(index)).attr('src');
 		}
 
@@ -385,7 +594,16 @@ var PREVIOUS = -1;
 	};
 
 	/* Add a shortcut for setting background image. */
-	$.fn.set_bg = function(src) { this.css('background-image', 'url(' + src + ')'); };
+	$.fn.set_bg = function(src, color)
+	{
+		if (null == src)
+			this.css({
+				'background-image': 'none',
+				'background-color': null == color ? 'red' : color,
+			});
+		else
+			this.css('background-image', 'url(' + src + ')');
+	};
 
 	/* Add a shortcut for rotating element. */
 	$.fn.rotate_y = function(y)
@@ -496,4 +714,35 @@ var TurningPage = function(book, id)
 Number.prototype.mod = function(n)
 {
 	return ((this % n) + n) % n;
+}
+
+
+function phase_to_string(phase)
+{
+	switch (phase) {
+
+		case NEXT_START:
+			return 'NEXT_START';
+			break;
+
+		case NEXT_MIDDLE:
+			return 'NEXT_MIDDLE';
+			break;
+
+		case NEXT_END:
+			return 'NEXT_END';
+			break;
+
+		case PREVIOUS_START:
+			return 'PREVIOUS_START';
+			break;
+
+		case PREVIOUS_MIDDLE:
+			return 'PREVIOUS_MIDDLE';
+			break;
+
+		case PREVIOUS_END:
+			return 'PREVIOUS_END';
+			break;
+	}
 }

@@ -52,7 +52,17 @@ ul {
 	width: 50%;
 	height: 100%;
 	position: relative;
+	float: left;
 }
+
+.right-page {
+	width: 50%;
+	height: 100%;
+	position: relative;
+	float: left;
+	background-position: -100% 0;
+}
+
 
 .back {
 	/* Fill the container (which is full height, half width). */
