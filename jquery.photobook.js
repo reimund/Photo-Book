@@ -19,22 +19,21 @@ var PREVIOUS_END    = 5;
 {
 	$.fn.photobook = function(options)
 	{
-		var self, is_turning;
+		var self;
 
 		self = this;
-
 		self.settings = $.extend({
 			'width':               null,
 			'height':              null,
-			'page_flip_duration':  1500,
-			'wrap_around':         false,
-			'page_buttons':        true,
-			'themed':              true,
-			'first_image':         null, // Url to the image that will be displayed on the first page.
-			'first_page_selector': null, // Overrides first_image.
-			'last_image':          null, // Url to the image that will be displayed on the last page.
-			'last_page_selector':  null, // Overrides last_image.
-			'start_page':          null, // Page number, 0 being the page with board and 'first_image'.
+			'page_flip_duration':  1500, // Flipping duration in milliseconds. Shorter duration => faster flipping.
+			'wrap_around':         false, // When true, flipping the last image will loop back to the first.
+			'page_buttons':        true, // Flip pages by clicking/dragging/swiping the left and right side of the book.
+			'themed':              true, // Tells whether the elements should be styled as a book or not.
+			'first_page_image':    null, // TODO: Url to the image that will be displayed on the first page.
+			'first_page_selector': null, // TODO: Overrides first_image.
+			'last_page_image':     null, // TODO: Url to the image that will be displayed on the last page.
+			'last_page_selector':  null, // TODO: Overrides last_image.
+			'start_page':          null, // TODO: Page number, 0 being the page with board and 'first_image'.
 			'container_selector': 'div.main-container',
 		}, options);
 
@@ -53,10 +52,11 @@ var PREVIOUS_END    = 5;
 		self.last_mouse_x = -1;
 		self.drag_speed = 1;
 
-		// By giving each page a unique identifier, we can prevent the complete
-		// function of page animations to run in the wrong order. That can
-		// happen when a page is rotating very quickly and will cause the
-		// incorrect page to be displayed for a short period of time.
+		// By giving each page a unique identifier, we can workaround a problem
+		// caused by the complete function of page animations runnning in the
+		// wrong order. That can happen when a page is rotating very quickly
+		// and will cause the incorrect page to be displayed for a short period
+		// of time.
 		self.page_counter = -1;
 		self.last_complete = -1;
 
