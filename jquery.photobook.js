@@ -19,21 +19,25 @@ var PREVIOUS_END    = 5;
 {
 	$.fn.photobook = function(options)
 	{
-		var settings, self, is_turning;
+		var self, is_turning;
 
-		settings = $.extend({
-			'width':              null,
-			'height':             null,
-			'page_flip_duration': 1500,
-			'wrap_around':        false,
-			'page_buttons':       true,
-			'themed':             true,
-			'first_page':         null,
-			'last_page':          null,
+		self = this;
+
+		self.settings = $.extend({
+			'width':               null,
+			'height':              null,
+			'page_flip_duration':  1500,
+			'wrap_around':         false,
+			'page_buttons':        true,
+			'themed':              true,
+			'first_image':         null, // Url to the image that will be displayed on the first page.
+			'first_page_selector': null, // Overrides first_image.
+			'last_image':          null, // Url to the image that will be displayed on the last page.
+			'last_page_selector':  null, // Overrides last_image.
+			'start_page':          null, // Page number, 0 being the page with board and 'first_image'.
 			'container_selector': 'div.main-container',
 		}, options);
 
-		self = this;
 
 		self.pages = [];
 
@@ -59,6 +63,7 @@ var PREVIOUS_END    = 5;
 		// Size of the sheets that stick out underneath the current pages.
 		self.sheet_width = 10;
 		self.sheet_height = 20;
+		//self.page_queue = new PageQueue(self);
 
 
 		this.init = function()
@@ -74,16 +79,16 @@ var PREVIOUS_END    = 5;
 			self.static_side_image = 0;
 			
 			// Get image dimensions.
-			if (settings.width == null)
+			if (self.settings.width == null)
 				self.width = self.images.first().width();
 			else
-				self.width = settings.width;
+				self.width = self.settings.width;
 
 			// Get image dimensions.
-			if (settings.height == null)
+			if (self.settings.height == null)
 				self.height = self.images.first().height();
 			else
-				self.height = settings.height;
+				self.height = self.settings.height;
 			
 			$(self).width(self.width).height(self.height);
 			
@@ -96,10 +101,10 @@ var PREVIOUS_END    = 5;
 			self.left_page.set_bg(self.get_image(self.current_image));
 			self.right_page.set_bg(self.get_image(self.current_image));
 
-			if (settings.page_buttons)
+			if (self.settings.page_buttons)
 				self.setup_page_buttons();
 
-			if (settings.themed) {
+			if (self.settings.themed) {
 				var html = '\
 					<div class="book-container"> \
 						<div class="book-board-spine">\
@@ -122,19 +127,19 @@ var PREVIOUS_END    = 5;
 					</div>';
 
 				self.detach();
-				$(settings.container_selector).append(html);
+				$(self.settings.container_selector).append(html);
 				self.insertAfter('div.sheets .sheets-left');
 			}
 
 			// Set width & heights.
-			self.closest('.book-container').width(settings.width);
-			self.closest('.book-board-spine').width(settings.width);
-			self.closest('.sheet-container').width(settings.width + self.sheet_width * 2);
-			self.closest('.sheet-container').css('top', -settings.height + 'px');
-			self.closest('.book-board-spine').height(settings.height);
-			self.closest('.board-inside').height(settings.height);
-			self.closest('.book-board-spine').find('div.spine').height(settings.height - 4 * 2); // Numbers from border image.
-			self.parent().find('div.top').height(settings.height - self.sheet_height);
+			self.closest('.book-container').width(self.settings.width);
+			self.closest('.book-board-spine').width(self.settings.width);
+			self.closest('.sheet-container').width(self.settings.width + self.sheet_width * 2);
+			self.closest('.sheet-container').css('top', -self.settings.height + 'px');
+			self.closest('.book-board-spine').height(self.settings.height);
+			self.closest('.board-inside').height(self.settings.height);
+			self.closest('.book-board-spine').find('div.spine').height(self.settings.height - 4 * 2); // Numbers from border image.
+			self.parent().find('div.top').height(self.settings.height - self.sheet_height);
 		};
 
 		this.next = function()
@@ -190,7 +195,7 @@ var PREVIOUS_END    = 5;
 			if (NEXT == direction) {
 
 				// The image that will be revealed behind the turning page:
-				if (settings.wrap_around)
+				if (self.settings.wrap_around)
 					state.d = (self.current_image + 1).mod(self.images.length);
 				else
 					state.d = Math.min(self.current_image + 1, self.images.length);
@@ -203,7 +208,7 @@ var PREVIOUS_END    = 5;
 			} else {
 
 				// The image that will be revealed behind the turning page:
-				if (settings.wrap_around)
+				if (self.settings.wrap_around)
 					state.a = (self.current_image - 1).mod(self.images.length);
 				else
 					state.a = Math.max(self.current_image - 1, -1);
@@ -214,22 +219,22 @@ var PREVIOUS_END    = 5;
 			}
 
 			if (NEXT == direction
-				&& (-1 == self.current_image && !settings.wrap_around))
+				&& (-1 == self.current_image && !self.settings.wrap_around))
 			{
 				state.phase = NEXT_START;
 			}
 			else if (PREVIOUS == direction
-					&& (0 == self.current_image && !settings.wrap_around))
+					&& (0 == self.current_image && !self.settings.wrap_around))
 			{
 				state.phase = PREVIOUS_START;
 			}
 			else if (NEXT == direction
-					&& ((self.images.length - 1) == self.current_image && !settings.wrap_around))
+					&& ((self.images.length - 1) == self.current_image && !self.settings.wrap_around))
 			{
 				state.phase = NEXT_END;
 			}
 			else if (PREVIOUS == direction
-					&& (self.images.length == self.current_image && !settings.wrap_around))
+					&& (self.images.length == self.current_image && !self.settings.wrap_around))
 			{
 				state.phase = PREVIOUS_END;
 			}
@@ -345,7 +350,7 @@ var PREVIOUS_END    = 5;
 
 			if (NEXT == direction)
 			{
-				if (settings.wrap_around)
+				if (self.settings.wrap_around)
 					self.current_image = (self.current_image + 1).mod(self.images.length);
 				else
 					self.current_image = Math.min(self.current_image + 1, self.images.length);
@@ -353,7 +358,7 @@ var PREVIOUS_END    = 5;
 			}
 			else
 			{
-				if (settings.wrap_around)
+				if (self.settings.wrap_around)
 					self.current_image = (self.current_image - 1).mod(self.images.length);
 				else
 					self.current_image = Math.max(self.current_image - 1, -1);
@@ -431,9 +436,10 @@ var PREVIOUS_END    = 5;
 		{
 			page.animate_turn({
 				drag_speed: self.drag_speed,
-				duration: settings.page_flip_duration,
+				duration: self.settings.page_flip_duration,
 				complete: function() {
-					var right_image, left_image;
+
+					var i;
 
 					// Check if this complete function was called before the
 					// complete function of previous the page. This can
@@ -448,26 +454,28 @@ var PREVIOUS_END    = 5;
 
 						// Swap out this page with previous page (ie the one
 						// that was supposed to finish before this one).
-						prev_page = self.pages[i - 1];
-						prev_page.phase = page.phase;
-						prev_page.skip_count += 1;
-						prev_page.back.css('background-color', page.back.css('background-color'));
-						prev_page.back.css('background-image', page.back.css('background-image'));
-						prev_page.front.css('background-color', page.front.css('background-color'));
-						prev_page.front.css('background-image', page.front.css('background-image'));
+						if (0 != i) {
+							prev_page = self.pages[i - 1];
+							prev_page.phase = page.phase;
+							prev_page.skip_count += page.skip_count;
+							prev_page.back.css('background-color', page.back.css('background-color'));
+							prev_page.back.css('background-image', page.back.css('background-image'));
+							prev_page.front.css('background-color', page.front.css('background-color'));
+							prev_page.front.css('background-image', page.front.css('background-image'));
 
-						// Forget about this page.
-						page.el.remove();
-						self.remove_page(page.id);
+							// Forget about this page.
+							page.el.remove();
+							self.remove_page(page.id);
 
-						return;
+							return;
+						}
 					}
 					
 					page.el.remove();
 
 					if (NEXT == page.direction) {
 
-						 if (settings.wrap_around) {
+						 if (self.settings.wrap_around) {
 							 self.static_side_image = (self.static_side_image + page.skip_count).mod(self.images.length);
 						 } else {
 							self.static_side_image = Math.min(self.static_side_image + page.skip_count, self.images.length);
@@ -475,7 +483,7 @@ var PREVIOUS_END    = 5;
 
 					} else {
 
-						 if (settings.wrap_around) {
+						 if (self.settings.wrap_around) {
 							 self.static_side_image = (self.static_side_image - page.skip_count).mod(self.images.length);
 						 } else {
 							self.static_side_image = Math.max(self.static_side_image - page.skip_count, -1);
@@ -614,7 +622,6 @@ var PREVIOUS_END    = 5;
 		this.css('transform', 'rotateY(' + y + 'deg)');  
 	}
 }(jQuery));
-
 
 var TurningPage = function(book, id)
 {
