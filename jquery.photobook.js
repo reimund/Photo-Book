@@ -96,16 +96,19 @@ var PREVIOUS_END    = 5;
 			self.left_page.prependTo(self);
 			self.left_page.after(self.right_page);
 
-			if (self.settings.start_page_selector) {
-				self.start_page = $(self.settings.start_page_selector).first().clone().addClass('right-page start-page');
-				self.right_page.after(self.start_page);
-				self.start_page.hide();
-			}
+			// No need to create start and end pages if wrap_around is enabled.
+			if (!self.settings.wrap_around) {
+				if (self.settings.start_page_selector) {
+					self.start_page = $(self.settings.start_page_selector).first().clone().addClass('right-page start-page');
+					self.right_page.after(self.start_page);
+					self.start_page.hide();
+				}
 
-			if (self.settings.end_page_selector) {
-				self.end_page = $(self.settings.end_page_selector).not('.start-page').first().clone().addClass('left-page end-page');
-				self.left_page.after(self.end_page);
-				self.end_page.hide();
+				if (self.settings.end_page_selector) {
+					self.end_page = $(self.settings.end_page_selector).not('.start-page').first().clone().addClass('left-page end-page');
+					self.left_page.after(self.end_page);
+					self.end_page.hide();
+				}
 			}
 
 
