@@ -138,6 +138,12 @@ div.book-container.simple div.book-board-spine {
 		inset 1px 2px 1px rgba(255, 255, 255, 0.5); /* Top internal highlight. */
 }
 
+div.book-container.simple div.board-inside {
+	background-color: #272727;
+	border-top: 0;
+	border-bottom: 0;
+}
+
 div.board-inside {
 	background-color: #d00;
 	border-width: 4px 2px 4px 2px;

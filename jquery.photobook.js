@@ -65,7 +65,6 @@ var PREVIOUS_END    = 5;
 		self.sheet_height = 20;
 
 		this.init = function()
-
 		{
 			self.images = self.find('img');
 
@@ -73,9 +72,6 @@ var PREVIOUS_END    = 5;
 			if(self.images.length <= 1)
 				return;
 				
-			self.current_image = Math.max(-1, Math.min(self.settings.start_page - 1, self.images.length));
-			self.static_side_image = self.current_image;
-			
 			// Get image dimensions.
 			if (self.settings.width == null)
 				self.width = self.images.first().width();
@@ -145,6 +141,10 @@ var PREVIOUS_END    = 5;
 				self.insertAfter('div.sheets .sheets-left');
 			}
 
+			// Add 'simple' class if browser doesn't support border-image.
+			if (undefined == self.closest('.book-container').css('border-image-slice'))
+				self.closest('.book-container').addClass('simple');
+
 			// Set width & heights.
 			self.closest('.book-container').width(self.settings.width);
 			self.closest('.book-board-spine').width(self.settings.width);
@@ -153,14 +153,24 @@ var PREVIOUS_END    = 5;
 			self.closest('.book-board-spine').height(self.settings.height);
 			self.closest('.board-inside').height(self.settings.height);
 			self.closest('.book-board-spine').find('div.spine').height(self.settings.height - 4 * 2); // Numbers from border image.
+			self.closest('.book-container.simple').find('.book-board-spine div.spine').height(self.settings.height); // No border on simple version.
 			self.parent().find('div.top').height(self.settings.height - self.sheet_height);
-			
-			self.set_page(self.current_image);
+
+			self.set_page(self.settings.start_page - 1);
 		};
 
 		this.set_page = function(page_number)
 		{
-			// Start page.
+			// Update current image state.
+			if (self.settings.wrap_around)
+				self.current_image = page_number.mod(self.images.length);
+			else
+				self.current_image = Math.max(-1, Math.min(page_number, self.images.length));
+
+			self.static_side_image = self.current_image;
+
+			// Set backgrounds for
+			// Start page:
 			if (-1 == self.current_image)
 			{
 				self.left_page.set_bg(null, 'transparent');
@@ -175,7 +185,7 @@ var PREVIOUS_END    = 5;
 
 			}
 			else if (self.images.length == self.current_image)
-			// End page.
+			// End page:
 			{
 				self.left_page.set_bg(self.settings.end_page_image, 'purple');
 				self.right_page.set_bg(null, 'transparent');
@@ -188,10 +198,14 @@ var PREVIOUS_END    = 5;
 				}
 			}
 			else
-			// All other pages.
+			// All other pages:
 			{
 				self.left_page.set_bg(self.get_image(self.current_image));
 				self.right_page.set_bg(self.get_image(self.current_image));
+				self.left_page.show();
+				self.right_page.show();
+				self.start_page.hide();
+				self.end_page.hide();
 			}
 		};
 
@@ -647,6 +661,21 @@ var PREVIOUS_END    = 5;
 
 		this.setup_page_buttons = function()
 		{
+			// Use fallback for old browsers withour 3d transform support.
+			if (!has3d()) {
+				self.left_page.add(self.end_page)
+					.on('click', function() {
+						self.set_page(self.current_image - 1);
+					});
+
+				self.right_page.add(self.start_page)
+					.on('click', function() {
+						self.set_page(self.current_image + 1);
+					});
+
+				return;
+			}
+
 			self.on('vmousedown', function(e) {
 				if (e.which != 1 && e.which != 0)
 					return;
@@ -856,4 +885,37 @@ function phase_to_string(phase)
 			return 'PREVIOUS_END';
 			break;
 	}
+}
+
+/**
+ * Detect browser 3d rotation support.
+ *
+ * By Lorenzo Polidori.
+ * https://gist.github.com/lorenzopolidori/3794226
+ */
+function has3d()
+{
+	var el = document.createElement('p'), 
+		has3d,
+		transforms = {
+			'webkitTransform':'-webkit-transform',
+			'OTransform':'-o-transform',
+			'msTransform':'-ms-transform',
+			'MozTransform':'-moz-transform',
+			'transform':'transform'
+		};
+
+	// Add it to the body to get the computed style.
+	document.body.insertBefore(el, null);
+
+	for (var t in transforms) {
+		if (el.style[t] !== undefined) {
+			el.style[t] = "translate3d(1px,1px,1px)";
+			has3d = window.getComputedStyle(el).getPropertyValue(transforms[t]);
+		}
+	}
+
+	document.body.removeChild(el);
+
+	return (has3d !== undefined && has3d.length > 0 && has3d !== "none");
 }
