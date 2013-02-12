@@ -477,7 +477,7 @@ var PREVIOUS_END    = 5;
 			self.on('vmousemove', function(e) {
 				var current_drag, y, mouse_x, min_max;
 
-				current_drag = (e.pageX - this.offsetLeft) - self.width / 2;
+				current_drag = (e.pageX - self.offset().left) - self.width / 2;
 				y = Math.min(0, Math.max(-180, (current_drag - self.drag_start) * (180 / (self.drag_start * 2))));
 				mouse_x = e.pageX;
 
@@ -654,7 +654,7 @@ var PREVIOUS_END    = 5;
 				var parent_offset = $(this).parent().offset(); 
 				var rel_x = e.pageX - parent_offset.left;
 
-				self.drag_start = (e.pageX - this.offsetLeft) - self.width / 2;
+				self.drag_start = (e.pageX - self.offset().left) - self.width / 2;
 
 				if ((rel_x / $(this).width()) > 0.5)
 					self.drag_turn(NEXT);
