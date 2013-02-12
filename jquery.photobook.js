@@ -33,7 +33,7 @@ var PREVIOUS_END    = 5;
 			'end_page_image':      null, // Url to the image that will be displayed on the last page.
 			'start_page_selector': null, // Overrides first_image.
 			'end_page_selector':   null, // Overrides last_image.
-			'start_page':          null, // TODO: Page number, 0 being the page with board and 'first_image'.
+			'start_page':          1, // Page number, 0 being 'start_page', n being 'end_page'.
 			'container_selector': 'div.main-container',
 		}, options);
 
@@ -73,8 +73,8 @@ var PREVIOUS_END    = 5;
 			if(self.images.length <= 1)
 				return;
 				
-			self.current_image = 0;
-			self.static_side_image = 0;
+			self.current_image = Math.max(-1, Math.min(self.settings.start_page - 1, self.images.length));
+			self.static_side_image = self.current_image;
 			
 			// Get image dimensions.
 			if (self.settings.width == null)
@@ -111,11 +111,9 @@ var PREVIOUS_END    = 5;
 				}
 			}
 
-
 			$('<div class="seam" />').prependTo(self);
 			self.images.remove();
-			self.left_page.set_bg(self.get_image(self.current_image));
-			self.right_page.set_bg(self.get_image(self.current_image));
+
 
 			if (self.settings.page_buttons)
 				self.setup_page_buttons();
@@ -156,6 +154,45 @@ var PREVIOUS_END    = 5;
 			self.closest('.board-inside').height(self.settings.height);
 			self.closest('.book-board-spine').find('div.spine').height(self.settings.height - 4 * 2); // Numbers from border image.
 			self.parent().find('div.top').height(self.settings.height - self.sheet_height);
+			
+			self.set_page(self.current_image);
+		};
+
+		this.set_page = function(page_number)
+		{
+			// Start page.
+			if (-1 == self.current_image)
+			{
+				self.left_page.set_bg(null, 'transparent');
+				self.right_page.set_bg(self.settings.start_page_image, 'purple');
+
+				if (null != self.start_page) {
+					// Put the start page in place.
+					self.right_page.after(self.start_page.addClass('right-page').detach());
+					self.start_page.show();
+					self.right_page.hide();
+				}
+
+			}
+			else if (self.images.length == self.current_image)
+			// End page.
+			{
+				self.left_page.set_bg(self.settings.end_page_image, 'purple');
+				self.right_page.set_bg(null, 'transparent');
+
+				if (null != self.end_page) {
+					// Put the end page in place.
+					self.left_page.after(self.end_page.addClass('left-page').detach());
+					self.end_page.show();
+					self.left_page.hide();
+				}
+			}
+			else
+			// All other pages.
+			{
+				self.left_page.set_bg(self.get_image(self.current_image));
+				self.right_page.set_bg(self.get_image(self.current_image));
+			}
 		};
 
 		this.next = function()
@@ -260,7 +297,7 @@ var PREVIOUS_END    = 5;
 			}
 
 			return state;
-		}
+		};
 
 		this.prepare_for_turn = function(direction)
 		{
@@ -425,7 +462,7 @@ var PREVIOUS_END    = 5;
 					return [-180, self.pages[i - 1].y - 0.25]
 			else
 				return [-180, 0];
-		}
+		};
 
 		this.drag_turn = function(direction)
 		{
@@ -461,7 +498,7 @@ var PREVIOUS_END    = 5;
 
 				turning_page.rotate_y(y);
 			});
-		}
+		};
 
 		this.remove_page = function(id)
 		{
@@ -470,140 +507,141 @@ var PREVIOUS_END    = 5;
 					self.pages.splice(i, 1);
 					break;
 				}
-		}
+		};
+
+		this.turn_complete = function(page) {
+			var i;
+
+			// Check if this complete function was called before the
+			// complete function of previous the page. This can
+			// sometimes happen when a page is dragged very fast.
+			if ((self.last_complete + 1) != page.id) {
+				var prev_page;
+
+				// Get the previous page index.
+				for (i in self.pages)
+					if (self.pages[i].id == page.id)
+						break;
+
+				// Swap out this page with previous page (ie the one
+				// that was supposed to finish before this one).
+				if (0 != i) {
+					prev_page = self.pages[i - 1];
+					prev_page.phase = page.phase;
+					prev_page.skip_count += page.skip_count;
+
+					// If the skipped page contains a start or end page
+					// we must put that in the page we keep.
+					if (0 < page.el.find('.start-page').length)
+						prev_page.front.append(self.start_page.detach());
+
+					if (0 < page.el.find('.end-page').length)
+						prev_page.back.append(self.end_page.detach());
+
+					prev_page.back.css('background-color', page.back.css('background-color'));
+					prev_page.back.css('background-image', page.back.css('background-image'));
+					prev_page.front.css('background-color', page.front.css('background-color'));
+					prev_page.front.css('background-image', page.front.css('background-image'));
+
+					// Forget about this page.
+					page.el.remove();
+					self.remove_page(page.id);
+
+					return;
+				}
+			}
+			
+			page.el.remove();
+
+			if (NEXT == page.direction) {
+
+				 if (self.settings.wrap_around) {
+					 self.static_side_image = (self.static_side_image + page.skip_count).mod(self.images.length);
+				 } else {
+					self.static_side_image = Math.min(self.static_side_image + page.skip_count, self.images.length);
+				 }
+
+			} else {
+
+				 if (self.settings.wrap_around) {
+					 self.static_side_image = (self.static_side_image - page.skip_count).mod(self.images.length);
+				 } else {
+					self.static_side_image = Math.max(self.static_side_image - page.skip_count, -1);
+				 }
+			}
+
+			switch (page.phase)
+			{
+				case NEXT_START:
+					self.left_page.set_bg(self.get_image(self.static_side_image));
+					break;
+
+				case NEXT_END:
+					self.left_page.set_bg(self.settings.end_page_image, 'purple');
+
+					if (null != self.end_page) {
+						// Put the end page in place.
+						self.left_page.after(self.end_page.addClass('left-page').detach());
+						self.end_page.show();
+						self.left_page.hide();
+					}
+					break;
+
+				case NEXT_MIDDLE:
+					self.left_page.set_bg(self.get_image(self.static_side_image));
+					break;
+
+				case PREVIOUS_START:
+
+					if (null != self.start_page) {
+						// Put the start page in place.
+						self.right_page.after(self.start_page.addClass('right-page').detach());
+						self.start_page.show();
+						self.right_page.hide();
+					}
+
+					self.right_page.set_bg(self.settings.start_page_image, 'purple');
+					self.left_page.set_bg(null, 'transparent');
+					break;
+
+				case PREVIOUS_MIDDLE:
+					self.left_page.set_bg(self.get_image(self.current_image));
+					self.right_page.set_bg(self.get_image(self.static_side_image));
+
+					// Check if the last turning page is the first
+					// page. If so, let the board show through...
+					if (PREVIOUS_START == self.pages[self.pages.length - 1].phase)
+						self.left_page.set_bg(null, 'transparent');
+					break;
+
+				case PREVIOUS_END:
+					self.right_page.set_bg(self.get_image(self.static_side_image));
+
+					// Check if the last turning page is the first
+					// page. If so, let the board show through...
+					if (PREVIOUS_START != self.pages[self.pages.length - 1].phase)
+						self.left_page.set_bg(self.get_image(self.current_image));
+					break;
+			}
+
+
+			if (self.find('.page').length < 1)
+				if (NEXT == page.direction)
+					self.is_turning_forwards = false;
+				else
+					self.is_turning_backwards = false;
+
+			self.pages.shift();
+
+			self.last_complete = page.id + page.skip_count - 1;
+		};
 
 		this.turn_animation = function(page)
 		{
 			page.animate_turn({
 				drag_speed: self.drag_speed,
 				duration: self.settings.page_flip_duration,
-				complete: function() {
-
-					var i;
-
-					// Check if this complete function was called before the
-					// complete function of previous the page. This can
-					// sometimes happen when a page is dragged very fast.
-					if ((self.last_complete + 1) != page.id) {
-						var prev_page;
-
-						// Get the previous page index.
-						for (i in self.pages)
-							if (self.pages[i].id == page.id)
-								break;
-
-						// Swap out this page with previous page (ie the one
-						// that was supposed to finish before this one).
-						if (0 != i) {
-							prev_page = self.pages[i - 1];
-							prev_page.phase = page.phase;
-							prev_page.skip_count += page.skip_count;
-
-							// If the skipped page contains a start or end page
-							// we must put that in the page we keep.
-							if (0 < page.el.find('.start-page').length)
-								prev_page.front.append(self.start_page.detach());
-
-							if (0 < page.el.find('.end-page').length)
-								prev_page.back.append(self.end_page.detach());
-
-							prev_page.back.css('background-color', page.back.css('background-color'));
-							prev_page.back.css('background-image', page.back.css('background-image'));
-							prev_page.front.css('background-color', page.front.css('background-color'));
-							prev_page.front.css('background-image', page.front.css('background-image'));
-
-							// Forget about this page.
-							page.el.remove();
-							self.remove_page(page.id);
-
-							return;
-						}
-					}
-					
-					page.el.remove();
-
-					if (NEXT == page.direction) {
-
-						 if (self.settings.wrap_around) {
-							 self.static_side_image = (self.static_side_image + page.skip_count).mod(self.images.length);
-						 } else {
-							self.static_side_image = Math.min(self.static_side_image + page.skip_count, self.images.length);
-						 }
-
-					} else {
-
-						 if (self.settings.wrap_around) {
-							 self.static_side_image = (self.static_side_image - page.skip_count).mod(self.images.length);
-						 } else {
-							self.static_side_image = Math.max(self.static_side_image - page.skip_count, -1);
-						 }
-					}
-
-					switch (page.phase)
-					{
-						case NEXT_START:
-							self.left_page.set_bg(self.get_image(self.static_side_image));
-							break;
-
-						case NEXT_END:
-							self.left_page.set_bg(self.settings.end_page_image, 'purple');
-
-							if (null != self.end_page) {
-								// Put the end page in place.
-								self.left_page.after(self.end_page.addClass('left-page').detach());
-								self.end_page.show();
-								self.left_page.hide();
-							}
-							break;
-
-						case NEXT_MIDDLE:
-							self.left_page.set_bg(self.get_image(self.static_side_image));
-							break;
-
-						case PREVIOUS_START:
-
-							if (null != self.start_page) {
-								// Put the start page in place.
-								self.right_page.after(self.start_page.addClass('right-page').detach());
-								self.start_page.show();
-								self.right_page.hide();
-							}
-
-							self.right_page.set_bg(self.settings.start_page_image, 'purple');
-							self.left_page.set_bg(null, 'transparent');
-							break;
-
-						case PREVIOUS_MIDDLE:
-							self.left_page.set_bg(self.get_image(self.current_image));
-							self.right_page.set_bg(self.get_image(self.static_side_image));
-
-							// Check if the last turning page is the first
-							// page. If so, let the board show through...
-							if (PREVIOUS_START == self.pages[self.pages.length - 1].phase)
-								self.left_page.set_bg(null, 'transparent');
-							break;
-
-						case PREVIOUS_END:
-							self.right_page.set_bg(self.get_image(self.static_side_image));
-
-							// Check if the last turning page is the first
-							// page. If so, let the board show through...
-							if (PREVIOUS_START != self.pages[self.pages.length - 1].phase)
-								self.left_page.set_bg(self.get_image(self.current_image));
-							break;
-					}
-
-
-					if (self.find('.page').length < 1)
-						if (NEXT == page.direction)
-							self.is_turning_forwards = false;
-						else
-							self.is_turning_backwards = false;
-
-					self.pages.shift();
-
-					self.last_complete = page.id + page.skip_count - 1;
-				}
+				complete: function() { self.turn_complete(page); }
 			});
 		};
 
