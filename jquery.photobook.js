@@ -23,16 +23,16 @@ var PREVIOUS_END    = 5;
 
 		self = this;
 		self.settings = $.extend({
-			'width':               null,
-			'height':              null,
+			'width':               null, // Width of the book.
+			'height':              null, // Height of the book.
 			'page_flip_duration':  1500, // Flipping duration in milliseconds. Shorter duration => faster flipping.
 			'wrap_around':         false, // When true, flipping the last image will loop back to the first.
 			'page_buttons':        true, // Flip pages by clicking/dragging/swiping the left and right side of the book.
 			'themed':              true, // Tells whether the elements should be styled as a book or not.
-			'first_page_image':    null, // TODO: Url to the image that will be displayed on the first page.
-			'first_page_selector': null, // TODO: Overrides first_image.
-			'last_page_image':     null, // TODO: Url to the image that will be displayed on the last page.
-			'last_page_selector':  null, // TODO: Overrides last_image.
+			'start_page_image':    null, // Url to the image that will be displayed on the first page.
+			'end_page_image':      null, // Url to the image that will be displayed on the last page.
+			'start_page_selector': null, // Overrides first_image.
+			'end_page_selector':   null, // Overrides last_image.
 			'start_page':          null, // TODO: Page number, 0 being the page with board and 'first_image'.
 			'container_selector': 'div.main-container',
 		}, options);
@@ -63,14 +63,12 @@ var PREVIOUS_END    = 5;
 		// Size of the sheets that stick out underneath the current pages.
 		self.sheet_width = 10;
 		self.sheet_height = 20;
-		//self.page_queue = new PageQueue(self);
-
 
 		this.init = function()
 
 		{
 			self.images = self.find('img');
-			
+
 			// If we only have one picture not much needs to be done.
 			if(self.images.length <= 1)
 				return;
@@ -92,10 +90,25 @@ var PREVIOUS_END    = 5;
 			
 			$(self).width(self.width).height(self.height);
 			
+			// Create the elements that will represent pages.
 			self.left_page = $('<div class="left-page"><div class="seam"/></div>');
 			self.right_page = $('<div class="right-page" />');
 			self.left_page.prependTo(self);
 			self.left_page.after(self.right_page);
+
+			if (self.settings.start_page_selector) {
+				self.start_page = $(self.settings.start_page_selector).first().clone().addClass('right-page start-page');
+				self.right_page.after(self.start_page);
+				self.start_page.hide();
+			}
+
+			if (self.settings.end_page_selector) {
+				self.end_page = $(self.settings.end_page_selector).not('.start-page').first().clone().addClass('left-page end-page');
+				self.left_page.after(self.end_page);
+				self.end_page.hide();
+			}
+
+
 			$('<div class="seam" />').prependTo(self);
 			self.images.remove();
 			self.left_page.set_bg(self.get_image(self.current_image));
@@ -292,9 +305,15 @@ var PREVIOUS_END    = 5;
 			switch (bs.phase) {
 
 				case NEXT_START:
+					self.right_page.show();
 					self.right_page.set_bg(self.get_image(bs.d));
-					turning_page.front.set_bg(null, 'purple');
+
+					// If start_page is used, put it inside the turning page.
+					if (null != self.start_page)
+						turning_page.front.append(self.start_page.removeClass('right-page').detach());
+
 					turning_page.back.set_bg(self.get_image(bs.b));
+					turning_page.front.set_bg(self.settings.start_page_image, 'purple');
 
 					break;
 
@@ -313,14 +332,26 @@ var PREVIOUS_END    = 5;
 				case NEXT_END:
 					self.right_page.set_bg(null, 'transparent');
 					turning_page.front.set_bg(self.get_image(bs.c));
-					turning_page.back.set_bg(null, 'purple');
+					turning_page.back.set_bg(self.settings.end_page_image, 'purple');
+
+					// If end_page is used, put it inside the turning page.
+					if (null != self.end_page) {
+						turning_page.back.append(self.end_page.removeClass('left-page').show().detach());
+						turning_page.back.set_bg(null, 'transparent');
+					}
 
 					break;
 
 				case PREVIOUS_START:
 					self.left_page.set_bg(null, 'transparent');
-					turning_page.front.set_bg(null, 'purple');
+					turning_page.front.set_bg(self.settings.start_page_image, 'purple');
 					turning_page.back.set_bg(self.get_image(bs.c));
+
+					// If start_page is used, put it inside the turning page.
+					if (null != self.start_page) {
+						turning_page.front.append(self.start_page.removeClass('right-page').show().detach());
+						turning_page.front.set_bg(null, 'transparent');
+					}
 
 					break;
 
@@ -341,9 +372,15 @@ var PREVIOUS_END    = 5;
 					break;
 
 				case PREVIOUS_END:
+					self.left_page.show();
 					self.left_page.set_bg(self.get_image(bs.a));
+
+					// If end_page is used, put it inside the turning page.
+					if (null != self.end_page)
+						turning_page.back.append(self.end_page.removeClass('left-page').detach());
+
 					turning_page.front.set_bg(self.get_image(bs.b));
-					turning_page.back.set_bg(null, 'purple');
+					turning_page.back.set_bg(self.settings.end_page_image, 'purple');
 
 					break;
 			}
@@ -458,6 +495,15 @@ var PREVIOUS_END    = 5;
 							prev_page = self.pages[i - 1];
 							prev_page.phase = page.phase;
 							prev_page.skip_count += page.skip_count;
+
+							// If the skipped page contains a start or end page
+							// we must put that in the page we keep.
+							if (0 < page.el.find('.start-page').length)
+								prev_page.front.append(self.start_page.detach());
+
+							if (0 < page.el.find('.end-page').length)
+								prev_page.back.append(self.end_page.detach());
+
 							prev_page.back.css('background-color', page.back.css('background-color'));
 							prev_page.back.css('background-image', page.back.css('background-image'));
 							prev_page.front.css('background-color', page.front.css('background-color'));
@@ -497,7 +543,14 @@ var PREVIOUS_END    = 5;
 							break;
 
 						case NEXT_END:
-							self.left_page.set_bg(null, 'purple');
+							self.left_page.set_bg(self.settings.end_page_image, 'purple');
+
+							if (null != self.end_page) {
+								// Put the end page in place.
+								self.left_page.after(self.end_page.addClass('left-page').detach());
+								self.end_page.show();
+								self.left_page.hide();
+							}
 							break;
 
 						case NEXT_MIDDLE:
@@ -505,7 +558,15 @@ var PREVIOUS_END    = 5;
 							break;
 
 						case PREVIOUS_START:
-							self.right_page.set_bg(null, 'purple');
+
+							if (null != self.start_page) {
+								// Put the start page in place.
+								self.right_page.after(self.start_page.addClass('right-page').detach());
+								self.start_page.show();
+								self.right_page.hide();
+							}
+
+							self.right_page.set_bg(self.settings.start_page_image, 'purple');
 							self.left_page.set_bg(null, 'transparent');
 							break;
 
@@ -607,7 +668,7 @@ var PREVIOUS_END    = 5;
 		if (null == src)
 			this.css({
 				'background-image': 'none',
-				'background-color': null == color ? 'red' : color,
+				'background-color': null == color ? '#000' : color,
 			});
 		else
 			this.css('background-image', 'url(' + src + ')');
@@ -723,7 +784,9 @@ Number.prototype.mod = function(n)
 	return ((this % n) + n) % n;
 }
 
-
+/**
+ * Used for debugging purposes.
+ */
 function phase_to_string(phase)
 {
 	switch (phase) {
