@@ -1,5 +1,5 @@
 /**
- * jQuery Photo Book v0.6
+ * jQuery Photo Book v0.7
  * http://lumens.se
  *
  * Copyright 2013, Reimund Trost
