@@ -33,7 +33,7 @@ var PREVIOUS_END    = 5;
 			'end_page_image':      null, // Url to the image that will be displayed on the last page.
 			'start_page_selector': null, // Overrides first_image.
 			'end_page_selector':   null, // Overrides last_image.
-			'start_page':          0, // Page number, 0 being 'start_page', n being 'end_page'.
+			'start_page':          1, // Page number, 0 being 'start_page', n being 'end_page'.
 			'container_selector': 'div.main-container',
 		}, options);
 
@@ -61,8 +61,8 @@ var PREVIOUS_END    = 5;
 		self.last_complete = -1;
 
 		// Size of the sheets that stick out underneath the current pages.
-		self.sheet_width = 10;
-		self.sheet_height = 20;
+		self.fore_edge_width = 10;
+		self.fore_edge_height = 20;
 
 		this.init = function()
 		{
@@ -148,17 +148,17 @@ var PREVIOUS_END    = 5;
 			// Set width & heights.
 			self.closest('.book-container').width(self.settings.width);
 			self.closest('.spine').width(self.settings.width);
-			self.closest('.fore-edge-container').width(self.settings.width + self.sheet_width * 2);
+			self.closest('.fore-edge-container').width(self.settings.width + self.fore_edge_width * 2);
 			self.closest('.fore-edge-container').css('top', -self.settings.height + 'px');
 			self.closest('.spine').height(self.settings.height);
 			self.closest('.pastedown-container').height(self.settings.height);
 			self.closest('.spine').find('div.pastedown').height(self.settings.height - 4 * 2); // Numbers from border image.
 			self.closest('.book-container.simple').find('.spine div.pastedown').height(self.settings.height); // No border on simple version.
-			self.parent().find('div.top').height(self.settings.height - self.sheet_height);
+			self.parent().find('div.top').height(self.settings.height - self.fore_edge_height);
 
 			self.set_page(self.settings.start_page - 1);
-			self.update_sheets('left');
-			self.update_sheets('right');
+			self.update_fore_edge('left');
+			self.update_fore_edge('right');
 		};
 
 		this.set_page = function(page_number)
@@ -387,7 +387,7 @@ var PREVIOUS_END    = 5;
 					turning_page.back.set_bg(self.get_image(bs.b));
 					turning_page.front.set_bg(self.settings.start_page_image, 'purple');
 
-					self.update_sheets('right');
+					self.update_fore_edge('right');
 
 					break;
 
@@ -401,7 +401,7 @@ var PREVIOUS_END    = 5;
 					turning_page.front.set_bg(self.get_image(bs.c));
 					turning_page.back.set_bg(self.get_image(bs.b));
 
-					self.update_sheets('right');
+					self.update_fore_edge('right');
 
 					break;
 
@@ -416,7 +416,7 @@ var PREVIOUS_END    = 5;
 						turning_page.back.set_bg(null, 'transparent');
 					}
 
-					self.update_sheets('right');
+					self.update_fore_edge('right');
 
 					break;
 
@@ -431,7 +431,7 @@ var PREVIOUS_END    = 5;
 						turning_page.front.set_bg(null, 'transparent');
 					}
 
-					self.update_sheets('left');
+					self.update_fore_edge('left');
 
 					break;
 
@@ -449,7 +449,7 @@ var PREVIOUS_END    = 5;
 					turning_page.front.set_bg(self.get_image(bs.b));
 					turning_page.back.set_bg(self.get_image(bs.c));
 
-					self.update_sheets('left');
+					self.update_fore_edge('left');
 
 					break;
 
@@ -464,7 +464,7 @@ var PREVIOUS_END    = 5;
 					turning_page.front.set_bg(self.get_image(bs.b));
 					turning_page.back.set_bg(self.settings.end_page_image, 'purple');
 
-					self.update_sheets('left');
+					self.update_fore_edge('left');
 
 					break;
 			}
@@ -473,17 +473,17 @@ var PREVIOUS_END    = 5;
 			return turning_page;
 		};
 
-		this.update_sheets = function(side)
+		this.update_fore_edge = function(side)
 		{
 			var n, a, x1, x2;
 			
 			if (self.settings.wrap_around)
-				// It doesn't make sense to change the sheets with wrap_around.
+				// It doesn't make sense to change the fore-edge with
+				// wrap_around enabled.
 				return;
 
-			// The number of sheets we will represent. The current sprite
-			// graphic limits us to a maximum of 8.
-			//n = Math.min(self.images.length, 8);
+			// The number of sheets we will represent in the fore-edge. The
+			// current sprite graphic limits us to a maximum of 8.
 			n = 8;
 			a = self.images.length / n; // How many pages we show per sheet.
 
@@ -501,13 +501,14 @@ var PREVIOUS_END    = 5;
 			}
 
 			if ('left' == side) {
-				// Left sheets.
+				// Left fore-edge.
 				self.closest('.fore-edge').find('.fore-edge-left div').each(function() {
 					$(this).css('background-position-x', (x2 * -10) + 'px');
 				});
 			}
 			else if ('right' == side)
 			{
+				// Right fore-edge.
 				self.closest('.fore-edge').find('.fore-edge-right div').each(function() {
 					$(this).css('background-position-x', (x1 * -10) + 'px');
 				});
@@ -644,7 +645,7 @@ var PREVIOUS_END    = 5;
 			{
 				case NEXT_START:
 					self.left_page.set_bg(self.get_image(self.static_side_image));
-					self.update_sheets('left');
+					self.update_fore_edge('left');
 
 					break;
 
@@ -658,13 +659,13 @@ var PREVIOUS_END    = 5;
 						self.left_page.hide();
 					}
 
-					self.update_sheets('left');
+					self.update_fore_edge('left');
 
 					break;
 
 				case NEXT_MIDDLE:
 					self.left_page.set_bg(self.get_image(self.static_side_image));
-					self.update_sheets('left');
+					self.update_fore_edge('left');
 
 					break;
 
@@ -680,7 +681,7 @@ var PREVIOUS_END    = 5;
 					self.right_page.set_bg(self.settings.start_page_image, 'purple');
 					self.left_page.set_bg(null, 'transparent');
 
-					self.update_sheets('right');
+					self.update_fore_edge('right');
 
 					break;
 
@@ -693,7 +694,7 @@ var PREVIOUS_END    = 5;
 					if (PREVIOUS_START == self.pages[self.pages.length - 1].phase)
 						self.left_page.set_bg(null, 'transparent');
 
-					self.update_sheets('right');
+					self.update_fore_edge('right');
 
 					break;
 
@@ -705,7 +706,7 @@ var PREVIOUS_END    = 5;
 					if (PREVIOUS_START != self.pages[self.pages.length - 1].phase)
 						self.left_page.set_bg(self.get_image(self.current_image));
 
-					self.update_sheets('right');
+					self.update_fore_edge('right');
 
 					break;
 			}
