@@ -805,7 +805,10 @@ var PREVIOUS_END    = 5;
 		return this;
 	};
 
-	/* Add a shortcut for setting background position in x. */
+	/**
+	 * Add a shortcut for setting background position in x.
+	 * We can't rely on background-position-x as it's not supported by Firefox.
+	 */
 	$.fn.set_bg_pos_x = function(x)
 	{
 		var y = this.css('background-position').split(' ')[1];
