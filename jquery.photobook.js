@@ -33,7 +33,7 @@ var PREVIOUS_END    = 5;
 			'end_page_image':      null, // Url to the image that will be displayed on the last page.
 			'start_page_selector': null, // Overrides first_image.
 			'end_page_selector':   null, // Overrides last_image.
-			'start_page':          1, // Page number, 0 being 'start_page', n being 'end_page'.
+			'start_page':          0, // Page number, 0 being 'start_page', n being 'end_page'.
 			'container_selector': 'div.main-container',
 		}, options);
 
@@ -157,6 +157,8 @@ var PREVIOUS_END    = 5;
 			self.parent().find('div.top').height(self.settings.height - self.sheet_height);
 
 			self.set_page(self.settings.start_page - 1);
+			self.update_sheets('left');
+			self.update_sheets('right');
 		};
 
 		this.set_page = function(page_number)
