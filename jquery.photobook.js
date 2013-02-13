@@ -87,7 +87,7 @@ var PREVIOUS_END    = 5;
 			$(self).width(self.width).height(self.height);
 			
 			// Create the elements that will represent pages.
-			self.left_page = $('<div class="left-page"><div class="seam"/></div>');
+			self.left_page = $('<div class="left-page"><div class="gutter"/></div>');
 			self.right_page = $('<div class="right-page" />');
 			self.left_page.prependTo(self);
 			self.left_page.after(self.right_page);
@@ -107,7 +107,7 @@ var PREVIOUS_END    = 5;
 				}
 			}
 
-			$('<div class="seam" />').prependTo(self);
+			$('<div class="gutter" />').prependTo(self);
 			self.images.remove();
 
 
@@ -117,17 +117,17 @@ var PREVIOUS_END    = 5;
 			if (self.settings.themed) {
 				var html = '\
 					<div class="book-container"> \
-						<div class="book-board-spine">\
-							<div class="board-inside"> \
-								<div class="spine"></div> \
+						<div class="spine">\
+							<div class="pastedown-container"> \
+								<div class="pastedown"></div> \
 							</div> \
-							<div class="sheet-container"> \
-								<div class="sheets"> \
-									<div class="sheets-left"> \
+							<div class="fore-edge-container"> \
+								<div class="fore-edge"> \
+									<div class="fore-edge-left"> \
 										<div class="top"></div> \
 										<div class="bottom"></div> \
 									</div> \
-									<div class="sheets-right"> \
+									<div class="fore-edge-right"> \
 										<div class="top"></div> \
 										<div class="bottom"></div> \
 									</div> \
@@ -138,7 +138,7 @@ var PREVIOUS_END    = 5;
 
 				self.detach();
 				$(self.settings.container_selector).append(html);
-				self.insertAfter('div.sheets .sheets-left');
+				self.insertAfter('div.fore-edge .fore-edge-left');
 			}
 
 			// Add 'simple' class if browser doesn't support border-image.
@@ -147,13 +147,13 @@ var PREVIOUS_END    = 5;
 
 			// Set width & heights.
 			self.closest('.book-container').width(self.settings.width);
-			self.closest('.book-board-spine').width(self.settings.width);
-			self.closest('.sheet-container').width(self.settings.width + self.sheet_width * 2);
-			self.closest('.sheet-container').css('top', -self.settings.height + 'px');
-			self.closest('.book-board-spine').height(self.settings.height);
-			self.closest('.board-inside').height(self.settings.height);
-			self.closest('.book-board-spine').find('div.spine').height(self.settings.height - 4 * 2); // Numbers from border image.
-			self.closest('.book-container.simple').find('.book-board-spine div.spine').height(self.settings.height); // No border on simple version.
+			self.closest('.spine').width(self.settings.width);
+			self.closest('.fore-edge-container').width(self.settings.width + self.sheet_width * 2);
+			self.closest('.fore-edge-container').css('top', -self.settings.height + 'px');
+			self.closest('.spine').height(self.settings.height);
+			self.closest('.pastedown-container').height(self.settings.height);
+			self.closest('.spine').find('div.pastedown').height(self.settings.height - 4 * 2); // Numbers from border image.
+			self.closest('.book-container.simple').find('.spine div.pastedown').height(self.settings.height); // No border on simple version.
 			self.parent().find('div.top').height(self.settings.height - self.sheet_height);
 
 			self.set_page(self.settings.start_page - 1);
@@ -500,13 +500,13 @@ var PREVIOUS_END    = 5;
 
 			if ('left' == side) {
 				// Left sheets.
-				self.closest('.sheets').find('.sheets-left div').each(function() {
+				self.closest('.fore-edge').find('.fore-edge-left div').each(function() {
 					$(this).set_bg_pos_x((x2 * -10) + 'px');
 				});
 			}
 			else if ('right' == side)
 			{
-				self.closest('.sheets').find('.sheets-right div').each(function() {
+				self.closest('.fore-edge').find('.fore-edge-right div').each(function() {
 					$(this).set_bg_pos_x((x1 * -10) + 'px');
 				});
 			}
@@ -835,8 +835,8 @@ var TurningPage = function(book, id)
 {
 	this.id = id;
 	this.el = $('<div class="page" />');
-	this.front = $('<div class="front"><div class="seam" /></div>').appendTo(this.el);
-	this.back = $('<div class="back"><div class="seam" /></div>').appendTo(this.el);
+	this.front = $('<div class="front"><div class="gutter" /></div>').appendTo(this.el);
+	this.back = $('<div class="back"><div class="gutter" /></div>').appendTo(this.el);
 	this.y = 0;
 	this.book = book;
 	this.skip_count = 1;

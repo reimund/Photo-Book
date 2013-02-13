@@ -109,8 +109,8 @@ div.book-container {
 	border-radius: 8px;
 }
 
-div.book-board-spine {
-	background: url(../img/board-fold.png) repeat-y center 0;
+div.spine {
+	background: url(../img/spine.png) repeat-y center 0;
 	position: relative;
 	top: -14px;
 	left: -30px;
@@ -127,7 +127,7 @@ div.book-container.simple {
 	-o-border-radius: 6px;
 }
 
-div.book-container.simple div.book-board-spine {
+div.book-container.simple div.spine {
 	border-radius: 5px;
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
@@ -138,27 +138,27 @@ div.book-container.simple div.book-board-spine {
 		inset 1px 2px 1px rgba(255, 255, 255, 0.5); /* Top internal highlight. */
 }
 
-div.book-container.simple div.board-inside {
+div.book-container.simple div.pastedown-container {
 	background-color: #272727;
 	border-top: 0;
 	border-bottom: 0;
 }
 
-div.board-inside {
+div.pastedown-container {
 	background-color: #d00;
 	border-width: 4px 2px 4px 2px;
 	border-color: transparent;
 	border-style: solid; /* Required for border-image to work in Firefox. */
-	border-image: url(../img/board-inside-border.png) 4 2 4 2 repeat;
+	border-image: url(../img/pastedown-border.png) 4 2 4 2 repeat;
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
 }
 
-div.board-inside div.spine { background: transparent url(../img/board-inside-fold.png) top center repeat-y; }
+div.pastedown-container div.pastedown { background: transparent url(../img/pastedown-bg.png) top center repeat-y; }
 
-div.left-page div.seam {
-	background: url(../img/seam-left.png) repeat-y right 0;
+div.left-page div.gutter {
+	background: url(../img/gutter-left.png) repeat-y right 0;
 	height: 100%;
 }
 
@@ -170,57 +170,57 @@ div.page div.start-page {
 	height: 100%;
 }
 
-div.book > div.seam {
-	background: url(../img/seam-right.png) repeat-y left 0;
+div.book > div.gutter {
+	background: url(../img/gutter-right.png) repeat-y left 0;
 	width: 50%;
 	height: 100%;
 	position: absolute;
 	right: 0;
 }
 
-div.page div.front div.seam {
-	background: url(../img/seam-right.png) repeat-y left 0;
+div.page div.front div.gutter {
+	background: url(../img/gutter-right.png) repeat-y left 0;
 	height: 100%;
 }
 
-div.page div.back div.seam {
-	background: url(../img/seam-left.png) repeat-y right 0;
+div.page div.back div.gutter {
+	background: url(../img/gutter-left.png) repeat-y right 0;
 	height: 100%;
 }
 
-div.sheet-container {
+div.fore-edge-container {
 	position: relative;
 	left: -10px;
 }
 
-div.sheets {
+div.fore-edge {
 	background: transparent;
 	display: table-row;
 	padding-right: 30px;
 }
 
-div.sheets div.sheets-left,
-div.sheets div.sheets-right {
+div.fore-edge div.fore-edge-left,
+div.fore-edge div.fore-edge-right {
 	float: left;
 	width: 10px;
 }
 
-div.sheets div.top {
+div.fore-edge div.top {
 	background-attachment: fixed;
-	background: transparent url(../img/sheets-sprite.png) no-repeat;
+	background: transparent url(../img/fore-edge-sprite.png) no-repeat;
 }
 
-div.sheets div.sheets-right div.top { background-position: -70px 0; }
+div.fore-edge div.fore-edge-right div.top { background-position: -70px 0; }
 
-div.sheets div.bottom {
+div.fore-edge div.bottom {
 	background-attachment: fixed;
-	background: transparent url(../img/sheets-sprite.png) no-repeat;
+	background: transparent url(../img/fore-edge-sprite.png) no-repeat;
 	background-position: 0 bottom;
 	width: 10px;
 	height: 20px;
 }
 
-div.sheets div.sheets-right div.bottom { background-position: -70px -1579px; }
+div.fore-edge div.fore-edge-right div.bottom { background-position: -70px -1579px; }
 
 #book {
 	float: left;
