@@ -473,65 +473,41 @@ var PREVIOUS_END    = 5;
 
 		this.update_sheets = function(side)
 		{
-			var stack, a, n, m;
+			var n, a, x1, x2;
 			
 			if (self.settings.wrap_around)
 				// It doesn't make sense to change the sheets with wrap_around.
 				return;
 
-			stack = 5; // This is how many different sheets we can represent with our graphics.
-			a = self.images.length / stack; // How many pages we show per sheet.
+			// The number of sheets we will represent. The current sprite
+			// graphic limits us to a maximum of 8.
+			//n = Math.min(self.images.length, 8);
+			n = 8;
+			a = self.images.length / n; // How many pages we show per sheet.
 
-			//for (i=-1; i < self.images.length; i++) {
-				//n = Math.max(0, Math.min(Math.round(i / a), 4));
-				//m = n + 5;
-				//console.log('--- ' + i + ':');
-				//console.log('n: ' + n);
-				//console.log('m: ' + m);
-				//console.log('');
-			//}
-			//console.log('---------------');
+			// Compute indices for each sprite section, which will be used for
+			// positioning the sprite 
+			x1 = Math.max(0, Math.min(Math.round((self.images.length - self.current_image - 1) / a), n - 1));
+			x2 = x1 + n;
 
-			// Compute a unique index for every possible graphical representation.
-			n = Math.max(0, Math.min(Math.round(self.current_image / a), 4));
-			m = n + 5;
-			
-			// Map our indices to sprite coordinates.
-			// Null means transparent background (ie no image).
-			//
-			//  4  3   2   1   null  null   8  7   6   5
-			//  0 -10 -20 -30   |     |   -40 -50 -60 -70
-			map = {
-				9: null,
-				8: -40,
-				7: -50,
-				6: -60,
-				5: -70,
-				4: 0,
-				3: -10,
-				2: -20,
-				1: -30,
-				0: null,
+			// When we got fewer than n images, we got a 1:1 match between
+			// sheets we can draw and actual pages. Do some number magic to get
+			// that working.
+			if (n >= self.images.length) {
+				x1 = n - (n - self.images.length) - self.current_image - 1;
+				x2 = n * 2 - self.current_image - 1;
 			}
 
 			if ('left' == side) {
 				// Left sheets.
 				self.closest('.sheets').find('.sheets-left div').each(function() {
-					$(this).removeClass('none');
-					if (null == map[n])
-						$(this).addClass('none');
-					else
-						$(this).set_bg_pos_x(map[n] + 'px');
+					$(this).set_bg_pos_x((x2 * -10) + 'px');
 				});
 			}
 			else if ('right' == side)
 			{
 				self.closest('.sheets').find('.sheets-right div').each(function() {
-					$(this).removeClass('none');
-					if (null == map[m])
-						$(this).addClass('none');
-					else
-						$(this).set_bg_pos_x(map[m] + 'px');
+					$(this).set_bg_pos_x((x1 * -10) + 'px');
 				});
 			}
 		};
