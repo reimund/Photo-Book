@@ -210,6 +210,9 @@ var PREVIOUS_END    = 5;
 				if (null != self.start_page) self.start_page.hide();
 				if (null != self.end_page) self.end_page.hide();
 			}
+
+			self.update_fore_edge('left');
+			self.update_fore_edge('right');
 		};
 
 		this.next = function()
