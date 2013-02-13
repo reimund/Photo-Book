@@ -503,14 +503,14 @@ var PREVIOUS_END    = 5;
 			if ('left' == side) {
 				// Left fore-edge.
 				self.closest('.fore-edge').find('.fore-edge-left div').each(function() {
-					$(this).css('background-position-x', (x2 * -10) + 'px');
+					$(this).set_bg_pos_x((x2 * -10) + 'px');
 				});
 			}
 			else if ('right' == side)
 			{
 				// Right fore-edge.
 				self.closest('.fore-edge').find('.fore-edge-right div').each(function() {
-					$(this).css('background-position-x', (x1 * -10) + 'px');
+					$(this).set_bg_pos_x((x1 * -10) + 'px');
 				});
 			}
 		};
@@ -804,6 +804,13 @@ var PREVIOUS_END    = 5;
 
 		return this;
 	};
+
+	/* Add a shortcut for setting background position in x. */
+	$.fn.set_bg_pos_x = function(x)
+	{
+		var y = this.css('background-position').split(' ')[1];
+		this.css('background-position', x + ' ' + y);
+	}
 
 	/* Add a shortcut for setting background image. */
 	$.fn.set_bg = function(src, color)
