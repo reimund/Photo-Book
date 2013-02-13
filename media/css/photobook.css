@@ -222,6 +222,14 @@ div.sheets div.bottom {
 
 div.sheets div.sheets-right div.bottom { background-position: -70px -1579px; }
 
+div.sheets div.sheets-right div.top.none,
+div.sheets div.sheets-right div.bottom.none,
+div.sheets div.sheets-left div.top.none,
+div.sheets div.sheets-left div.bottom.none {
+	background-image: none;
+	/*background: transparent*/
+}
+
 #book {
 	float: left;
 	position: relative;

@@ -204,8 +204,9 @@ var PREVIOUS_END    = 5;
 				self.right_page.set_bg(self.get_image(self.current_image));
 				self.left_page.show();
 				self.right_page.show();
-				self.start_page.hide();
-				self.end_page.hide();
+
+				if (null != self.start_page) self.start_page.hide();
+				if (null != self.end_page) self.end_page.hide();
 			}
 		};
 
@@ -356,6 +357,21 @@ var PREVIOUS_END    = 5;
 			turning_page.image_index = self.current_image;
 			turning_page.rotate_y(target_y);
 
+			if (NEXT == direction)
+			{
+				if (self.settings.wrap_around)
+					self.current_image = (self.current_image + 1).mod(self.images.length);
+				else
+					self.current_image = Math.min(self.current_image + 1, self.images.length);
+
+			}
+			else
+			{
+				if (self.settings.wrap_around)
+					self.current_image = (self.current_image - 1).mod(self.images.length);
+				else
+					self.current_image = Math.max(self.current_image - 1, -1);
+			}
 			switch (bs.phase) {
 
 				case NEXT_START:
@@ -369,6 +385,8 @@ var PREVIOUS_END    = 5;
 					turning_page.back.set_bg(self.get_image(bs.b));
 					turning_page.front.set_bg(self.settings.start_page_image, 'purple');
 
+					self.update_sheets('right');
+
 					break;
 
 				case NEXT_MIDDLE:
@@ -380,6 +398,8 @@ var PREVIOUS_END    = 5;
 					self.right_page.set_bg(self.get_image(bs.d));
 					turning_page.front.set_bg(self.get_image(bs.c));
 					turning_page.back.set_bg(self.get_image(bs.b));
+
+					self.update_sheets('right');
 
 					break;
 
@@ -394,6 +414,8 @@ var PREVIOUS_END    = 5;
 						turning_page.back.set_bg(null, 'transparent');
 					}
 
+					self.update_sheets('right');
+
 					break;
 
 				case PREVIOUS_START:
@@ -406,6 +428,8 @@ var PREVIOUS_END    = 5;
 						turning_page.front.append(self.start_page.removeClass('right-page').show().detach());
 						turning_page.front.set_bg(null, 'transparent');
 					}
+
+					self.update_sheets('left');
 
 					break;
 
@@ -423,6 +447,8 @@ var PREVIOUS_END    = 5;
 					turning_page.front.set_bg(self.get_image(bs.b));
 					turning_page.back.set_bg(self.get_image(bs.c));
 
+					self.update_sheets('left');
+
 					break;
 
 				case PREVIOUS_END:
@@ -436,26 +462,78 @@ var PREVIOUS_END    = 5;
 					turning_page.front.set_bg(self.get_image(bs.b));
 					turning_page.back.set_bg(self.settings.end_page_image, 'purple');
 
+					self.update_sheets('left');
+
 					break;
 			}
 
-			if (NEXT == direction)
-			{
-				if (self.settings.wrap_around)
-					self.current_image = (self.current_image + 1).mod(self.images.length);
-				else
-					self.current_image = Math.min(self.current_image + 1, self.images.length);
 
-			}
-			else
-			{
-				if (self.settings.wrap_around)
-					self.current_image = (self.current_image - 1).mod(self.images.length);
-				else
-					self.current_image = Math.max(self.current_image - 1, -1);
-			}
-			
 			return turning_page;
+		};
+
+		this.update_sheets = function(side)
+		{
+			var stack, a, n, m;
+			
+			if (self.settings.wrap_around)
+				// It doesn't make sense to change the sheets with wrap_around.
+				return;
+
+			stack = 5; // This is how many different sheets we can represent with our graphics.
+			a = self.images.length / stack; // How many pages we show per sheet.
+
+			//for (i=-1; i < self.images.length; i++) {
+				//n = Math.max(0, Math.min(Math.round(i / a), 4));
+				//m = n + 5;
+				//console.log('--- ' + i + ':');
+				//console.log('n: ' + n);
+				//console.log('m: ' + m);
+				//console.log('');
+			//}
+			//console.log('---------------');
+
+			// Compute a unique index for every possible graphical representation.
+			n = Math.max(0, Math.min(Math.round(self.current_image / a), 4));
+			m = n + 5;
+			
+			// Map our indices to sprite coordinates.
+			// Null means transparent background (ie no image).
+			//
+			//  4  3   2   1   null  null   8  7   6   5
+			//  0 -10 -20 -30   |     |   -40 -50 -60 -70
+			map = {
+				9: null,
+				8: -40,
+				7: -50,
+				6: -60,
+				5: -70,
+				4: 0,
+				3: -10,
+				2: -20,
+				1: -30,
+				0: null,
+			}
+
+			if ('left' == side) {
+				// Left sheets.
+				self.closest('.sheets').find('.sheets-left div').each(function() {
+					$(this).removeClass('none');
+					if (null == map[n])
+						$(this).addClass('none');
+					else
+						$(this).set_bg_pos_x(map[n] + 'px');
+				});
+			}
+			else if ('right' == side)
+			{
+				self.closest('.sheets').find('.sheets-right div').each(function() {
+					$(this).removeClass('none');
+					if (null == map[m])
+						$(this).addClass('none');
+					else
+						$(this).set_bg_pos_x(map[m] + 'px');
+				});
+			}
 		};
 
 		this.rotation_bounds = function(direction, page)
@@ -588,6 +666,8 @@ var PREVIOUS_END    = 5;
 			{
 				case NEXT_START:
 					self.left_page.set_bg(self.get_image(self.static_side_image));
+					self.update_sheets('left');
+
 					break;
 
 				case NEXT_END:
@@ -599,10 +679,15 @@ var PREVIOUS_END    = 5;
 						self.end_page.show();
 						self.left_page.hide();
 					}
+
+					self.update_sheets('left');
+
 					break;
 
 				case NEXT_MIDDLE:
 					self.left_page.set_bg(self.get_image(self.static_side_image));
+					self.update_sheets('left');
+
 					break;
 
 				case PREVIOUS_START:
@@ -616,6 +701,9 @@ var PREVIOUS_END    = 5;
 
 					self.right_page.set_bg(self.settings.start_page_image, 'purple');
 					self.left_page.set_bg(null, 'transparent');
+
+					self.update_sheets('right');
+
 					break;
 
 				case PREVIOUS_MIDDLE:
@@ -626,6 +714,9 @@ var PREVIOUS_END    = 5;
 					// page. If so, let the board show through...
 					if (PREVIOUS_START == self.pages[self.pages.length - 1].phase)
 						self.left_page.set_bg(null, 'transparent');
+
+					self.update_sheets('right');
+
 					break;
 
 				case PREVIOUS_END:
@@ -635,6 +726,9 @@ var PREVIOUS_END    = 5;
 					// page. If so, let the board show through...
 					if (PREVIOUS_START != self.pages[self.pages.length - 1].phase)
 						self.left_page.set_bg(self.get_image(self.current_image));
+
+					self.update_sheets('right');
+
 					break;
 			}
 
@@ -731,6 +825,13 @@ var PREVIOUS_END    = 5;
 
 		return this;
 	};
+
+	/* Add a shortcut for setting background position in x. */
+	$.fn.set_bg_pos_x = function(x)
+	{
+		var y = this.css('background-position').split(' ')[1];
+		this.css('background-position', x + ' ' + y);
+	}
 
 	/* Add a shortcut for setting background image. */
 	$.fn.set_bg = function(src, color)
