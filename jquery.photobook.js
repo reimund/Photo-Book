@@ -29,6 +29,7 @@ var PREVIOUS_END    = 5;
 			'wrap_around':         false, // When true, flipping the last image will loop back to the first.
 			'page_buttons':        true, // Flip pages by clicking/dragging/swiping the left and right side of the book.
 			'themed':              true, // Tells whether the elements should be styled as a book or not.
+			'gutter':              true, // Give the book a gutter.
 			'start_page_image':    null, // Url to the image that will be displayed on the first page.
 			'end_page_image':      null, // Url to the image that will be displayed on the last page.
 			'start_page_selector': null, // Overrides first_image.
@@ -87,7 +88,7 @@ var PREVIOUS_END    = 5;
 			$(self).width(self.width).height(self.height);
 			
 			// Create the elements that will represent pages.
-			self.left_page = $('<div class="left-page"><div class="gutter"/></div>');
+			self.left_page = $('<div class="left-page">' + (self.settings.gutter ? '<div class="gutter"/>' : '') + '</div>');
 			self.right_page = $('<div class="right-page" />');
 			self.left_page.prependTo(self);
 			self.left_page.after(self.right_page);
@@ -107,7 +108,6 @@ var PREVIOUS_END    = 5;
 				}
 			}
 
-			$('<div class="gutter" />').prependTo(self);
 			self.images.remove();
 
 
@@ -844,8 +844,8 @@ var TurningPage = function(book, id)
 {
 	this.id = id;
 	this.el = $('<div class="page" />');
-	this.front = $('<div class="front"><div class="gutter" /></div>').appendTo(this.el);
-	this.back = $('<div class="back"><div class="gutter" /></div>').appendTo(this.el);
+	this.front = $('<div class="front"></div>').appendTo(this.el);
+	this.back = $('<div class="back">' + (book.settings.gutter ? '<div class="gutter" />' : '') + '</div>').appendTo(this.el);
 	this.y = 0;
 	this.book = book;
 	this.skip_count = 1;
